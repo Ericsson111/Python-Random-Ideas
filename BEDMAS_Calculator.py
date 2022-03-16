@@ -1,4 +1,4 @@
-import collections
+# Python 3.8.6 64-bit
 import sys
 priority = {0: ['(', ')'], 1: ['[', ']'], 2: ['*', '/'], 3: ['+', '-']}
 
