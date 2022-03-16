@@ -3,8 +3,8 @@ import sys
 priority = {0: ['(', ')'], 1: ['[', ']'], 2: ['*', '/'], 3: ['+', '-']}
 
 class Calculator():
-    def __init__(self, bedmas):
-        self.bedmas = bedmas
+    def __init__(self, expression):
+        self.expression = expression
 
     def find_priority_index(self, inp):
         index_arr = {}
@@ -20,11 +20,11 @@ class Calculator():
                             index_arr[key].append(index)
                         else:
                             index_arr[key] = [index]
-        return index_arr # {2: [1, 6, 13], 1: [2, 16, 18, 29], 0: [3, 8, 10, 15, 22, 28], 3: [9, 17, 21, 25]}
+        return index_arr 
         
     def bracket_filter(self):
         bracket_arr = {}
-        Q = self.bedmas
+        Q = self.expression
         sorted_arr = calculator.find_priority_index(Q)
         for key in [int(i) for i in sorted_arr.keys()]:
             if key == 1: # if there is square bracket
@@ -42,9 +42,9 @@ class Calculator():
                 return calculator.evaluate_outside_bracket(Q)
     
     def evaluate_inside_bracket(self, inp):
-        question = self.bedmas
+        question = self.expression
         for char_index in range(len(inp)):
-            if '(' == inp[char_index]: # first do the bracket
+            if '(' == inp[char_index]: 
                 for i in range(len(inp)):
                     if inp[char_index+i] == ')':
                         result_round_bracket = eval(inp[char_index+1:char_index+i])
@@ -53,7 +53,7 @@ class Calculator():
         if '[' in question:
             evaluation = str(eval(question[question.index('[')+1:question.index(']')]))
             question = question.replace(str(question[question.index('['):question.index(']')+1]), evaluation)
-        return calculator.evaluate_outside_bracket(question) # 1x[77x7]x2
+        return calculator.evaluate_outside_bracket(question)
         
     def evaluate_outside_bracket(self, inp):
         return eval(inp)
