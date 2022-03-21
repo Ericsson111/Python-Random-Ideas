@@ -10,9 +10,6 @@ def display_board():
     print(board[3] + '|' + board[4] + '|' + board[5])
     print(board[6] + '|' + board[7] + '|' + board[8])
 
-def play_history():
-    pass
-
 winner = None
 class Win_Determine:
     def row(player):
