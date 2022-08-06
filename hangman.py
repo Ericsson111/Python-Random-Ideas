@@ -18,18 +18,69 @@ display_list = [char.replace(char, '_') for char in correct_word] # displaying t
 print('%s: %s(%d alphabets)' % (category_name, display_list, len(display_list)))
 
 wrong_guesses = []
-max_guesses = 8
+limit_guesses = 0
 count = 0
 
 def result():
-    global max_guesses 
-    if max_guesses == 0:
-        print('fail!'), quit()
     if '_' not in display_list:
         print('win!'), quit()
 
+def hangman_drawer():
+    global limit_guesses
+    if limit_guesses == 1:
+        print("   _____ \n"
+              "  |      \n"
+              "  |      \n"
+              "  |      \n"
+              "  |      \n"
+              "  |      \n"
+              "  |      \n"
+              "__|__\n")
+        print("Wrong guess. " + str(limit_guesses) + " guesses remaining\n")
+    elif limit_guesses == 2:
+        print("   _____ \n"
+              "  |     | \n"
+              "  |     |\n"
+              "  |     | \n"
+              "  |     O \n"
+              "  |      \n"
+              "  |      \n"
+              "__|__\n")
+        print("Wrong guess. " + str(limit_guesses) + " guesses remaining\n")
+    elif limit_guesses == 3:
+        print("   _____ \n"
+              "  |     | \n"
+              "  |     |\n"
+              "  |     | \n"
+              "  |     O \n"
+              "  |    / \ \n"
+              "  |      \n"
+              "__|__\n")
+        print("Wrong guess. " + str(limit_guesses) + " guesses remaining\n")
+    elif limit_guesses == 4:
+        print("   _____ \n"
+              "  |     | \n"
+              "  |     |\n"
+              "  |     | \n"
+              "  |     O \n"
+              "  |    /|\ \n"
+              "  |      \n"
+              "__|__\n")
+        print("Wrong guess. " + str(limit_guesses) + " last guess remaining\n")
+    elif limit_guesses == 5:
+        print("   _____ \n"
+              "  |     | \n"
+              "  |     |\n"
+              "  |     | \n"
+              "  |     O \n"
+              "  |    /|\ \n"
+              "  |    / \ \n"
+              "__|__\n")
+        print("Wrong guess. You are hanged!!!\n")
+        print('The word was: "%s"' % correct_word)
+
 def user_input():
-    global max_guesses, count
+    global limit_guesses, count
     while True:
         print('wrong guesses:',wrong_guesses)
         player_guess = input('Please enter your guess(alphabet): ')
@@ -42,8 +93,8 @@ def user_input():
             result()
         else:
             wrong_guesses.append(player_guess)
-            max_guesses -= 1
-            print('%d guesses left!' % max_guesses)
-            print('%s: %s(%d alphabets left)' % (category_name, display_list, len(display_list) - count))
+            limit_guesses += 1
+            hangman_drawer()
             result()
+
 user_input()
