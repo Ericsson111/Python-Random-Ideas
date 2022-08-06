@@ -28,7 +28,6 @@ def result():
     if '_' not in display_list:
         print('win!'), quit()
 
-
 def user_input():
     global max_guesses, count
     while True:
