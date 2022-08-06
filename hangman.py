@@ -47,4 +47,4 @@ def user_input():
             print('%d guesses left!' % max_guesses)
             print('%s: %s(%d alphabets left)' % (category_name, display_list, len(display_list) - count))
             result()
-print(user_input())
+user_input()
