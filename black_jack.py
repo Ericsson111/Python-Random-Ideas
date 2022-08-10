@@ -39,13 +39,17 @@ def win_determine(player_cards_list, computer_cards_list):
         winner = 'Computer'
     if sum(computer_cards_list) > 21:
         winner = 'Player'
-    if sum(player_cards_list) + sum(computer_cards_list) < 42:
-        if sum(player_cards_list) > sum(computer_cards_list):
-            winner = 'Player'
-        if sum(player_cards_list) < sum(computer_cards_list):
-            winner = 'Computer'
     if sum(player_cards_list) == sum(computer_cards_list):
         winner = 'Drew'
+    if sum(player_cards_list) > 21:
+        if sum(computer_cards_list) > 21:
+            winner = 'None'
+    if sum(player_cards_list) < 21:
+        if sum(computer_cards_list) < 21:
+            if sum(player_cards_list) > sum(computer_cards_list):
+                winner = 'Player'
+            if sum(player_cards_list) < sum(computer_cards_list):
+                winner = 'Computer'
 
 def reshuffle(player_cards, computer_cards):
     player_cards = [int(i) for i in player_cards]
@@ -82,13 +86,12 @@ def play():
             player_decision = input("""Hit or Stand?""")
             if player_decision.lower() == 'hit':
                 player_cards.append(cards_keys[rd.randint(0, 12)])
-                print(player_cards)
                 print_card_user(player_cards)
             if player_decision.lower() == 'stand':
                 win_determine(player_cards, computer_cards)
+                print("Game result: Player: %d - Computer: %d" % (sum([int(i) for i in player_cards]), sum([int(i) for i in computer_cards])))
                 print("\nThe Winner is: %s" % winner)
                 print("Computer's Cards:")
                 print_card_user(computer_cards)
-                print(sum([int(i) for i in player_cards]), '-', sum([int(i) for i in computer_cards]))
                 quit()
 play()
