@@ -61,11 +61,14 @@ def customer_order(category, food):
     return customer_input()
 
 def drinks_selection(drink: str):
-    drink_size = input("What size do you perfer your drinks to be?(S, M, L): ")
-    order_modification(drink)
-    order[drink] = menu['Drinks'][drink][drink_size]
-    print("Order Added - %s" % drink)
-    return customer_input()
+    rink_size = input("What size do you perfer your drinks to be?(S, M, L): ")
+    if drink_size not in ['S', 'M', 'L']:
+        return drinks_selection(drink)
+    else:
+        order_modification(drink)
+        order[drink] = menu['Drinks'][drink][drink_size]
+        print("Order Added - %s" % drink)
+        return customer_input()
 
 def customer_input(): 
     while True:
@@ -86,10 +89,13 @@ def action(input_command):
        food_arr = menu[category] 
        print(food_arr) 
        food_choice = input("What would you like to have?: ")
-       if category == 'Drinks':
-           return drinks_selection(food_choice)
+       if food_choice not in food_arr.keys():
+           return action(input_command)
        else:
-        return customer_order(category, food_choice)
+           if category == 'Drinks':
+               return drinks_selection(food_choice)
+           else:
+               return customer_order(category, food_choice)
 
 def action_display(): 
     print("Welcome to McQuan's\n")
