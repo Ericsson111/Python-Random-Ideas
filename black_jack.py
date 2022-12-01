@@ -31,24 +31,26 @@ def win_determine(player_cards_list, computer_cards_list):
     global winner
     player_cards_list = [int(i) for i in player_cards_list]
     computer_cards_list = [int(i) for i in computer_cards_list]
-    if sum(player_cards_list) == 21:
+    player_point = sum(player_cards_list)
+    computer_point = sum(computer_cards_list)
+    if player_point == 21:
         winner = 'Player'
-    if sum(computer_cards_list) == 21:
+    if computer_point == 21:
         winner = 'Computer'
-    if sum(player_cards_list) > 21:
+    if player_point > 21:
         winner = 'Computer'
-    if sum(computer_cards_list) > 21:
+    if computer_point > 21:
         winner = 'Player'
-    if sum(player_cards_list) == sum(computer_cards_list):
+    if player_point == computer_point:
         winner = 'Drew'
-    if sum(player_cards_list) > 21:
-        if sum(computer_cards_list) > 21:
+    if player_point > 21:
+        if computer_point > 21:
             winner = 'None'
-    if sum(player_cards_list) < 21:
-        if sum(computer_cards_list) < 21:
-            if sum(player_cards_list) > sum(computer_cards_list):
+    if player_point < 21:
+        if computer_point < 21:
+            if player_point > computer_point:
                 winner = 'Player'
-            if sum(player_cards_list) < sum(computer_cards_list):
+            if player_point < computer_point:
                 winner = 'Computer'
 
 def reshuffle(player_cards, computer_cards):
