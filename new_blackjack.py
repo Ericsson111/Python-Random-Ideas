@@ -1,4 +1,7 @@
+
+from collections import defaultdict
 import random
+from timeit import default_timer as timer
 random.seed()
 
 num_players = 4
@@ -6,7 +9,7 @@ num_players = 4
 class Dealer:
     def __init__(self, num_players):
         self.num_players = num_players
-        self.hands = [[] for _ in range(num_players)] # Store the hands of each player
+        self.hands = [] # Store the hands of each player
         self.deck = []
         self.special_values = {'A': '[1, 11]', 
                                'J': '10', 
@@ -14,6 +17,7 @@ class Dealer:
                                'K': '10'}
 
     def shuffle(self):
+        self.hands = [[] for _ in range(num_players)]
         suits = ['♠', '♥', '♦', '♣']
         values = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K']
         self.deck = [{'value': value, 'suit': suit} for value in values for suit in suits]
@@ -39,7 +43,7 @@ class Dealer:
     def decision(self):
         dealer_hand = [card['value'] for card in self.hands[0]] # ['9', 'A']
         dealer_hand_val = [self.special_values[card] if card in ['A', 'J', 'Q', 'K'] else card for card in dealer_hand]  # [9, [1, 11]]
-        print(dealer_hand_val)
+        #print(dealer_hand_val)
 
         ace_present = False 
 
@@ -64,16 +68,21 @@ class Dealer:
             handA = dealer_hand_val
             handA_sum = sum([int(i) for i in handA])
 
-        print(f"handA: {handA}\nhandA_sum: {handA_sum}\nhandB: {handB}\nhandB_sum: {handB_sum}")
+        #print(f"handA: {handA}\nhandA_sum: {handA_sum}\nhandB: {handB}\nhandB_sum: {handB_sum}")
 
         primary_hand = None 
 
         if ace_present:
-            primary_hand = (handA, handA_sum) if handA_sum >= handB_sum else (handB, handB_sum)
+            for i in range(2):
+                hand = [handA, handB][i]
+                val = [handA_sum, handB_sum][i]
+                
+                return dealer.card_counting((hand, val))
+            # primary_hand = (handA, handA_sum) if handA_sum >= handB_sum else (handB, handB_sum)
         else:
             primary_hand = (handA, handA_sum)
 
-        print(f"primary_hand: {primary_hand}")
+        #print(f"primary_hand: {primary_hand}")
         return dealer.card_counting(primary_hand)
 
     def card_counting(self, primary_hand):
@@ -82,31 +91,48 @@ class Dealer:
         deck = [card['value'] for card in self.deck]
 
         safe_cards_count = 0 # Cards the dealer can have without getting busted
-        print(f"winning_difference: {winning_difference}")
+        #print(f"winning_difference: {winning_difference}")
         safe_cards_count += deck.count('A')
 
         for card_val in range(2, winning_difference+1):
             safe_cards_count += deck.count(str(card_val))
 
-        print(f"safe_card_count: {safe_cards_count}, len(deck): {len(deck)}")
+        #print(f"safe_card_count: {safe_cards_count}, len(deck): {len(deck)}")
 
-        print(f"Chance of not busting: {(safe_cards_count/len(deck))*100:.2f}%")
+        #print(f"Chance of not busting: {(safe_cards_count/len(deck))*100:.2f}%")
+        
+        return (val, round((safe_cards_count/len(deck))*100, 2))
+
+start = timer()
 
 # Deal cards to players
 dealer = Dealer(num_players)
-deck = dealer.shuffle()
 
-hands = dealer.draw()
-print(f"Cards Count: {len(dealer.deck)}, Hands: {dealer.hands}")
+testcase = defaultdict(list) 
+testcase_avg = defaultdict(list)
+count = 1 
+while count <= 100:
+    deck = dealer.shuffle()
+    hands = dealer.draw()
+    val, safe_percentage = dealer.decision()
+    if val <= 21:
+        print(f"Count: {count}")
+        testcase[val].append(safe_percentage)
+        count += 1
+    
+# Find median value of every sum of card combinations
+for val in testcase.keys():
+    tests = testcase[val] 
+    tests = sorted(tests) 
+    median = tests[len(tests)//2] 
+    average = round((sum(tests) / len(tests)),2)
+    testcase_avg[val] = (median, average) 
+    
+testcase_avg = [{i: testcase_avg[i]} for i in sorted(testcase.keys())]
+end = timer() 
 
-dealer.deal_cards(1) # 1 is player id
-print(f"Cards Count: {len(dealer.deck)}, Hands: {dealer.hands}")
-
-dealer.deal_cards(1)
-print(f"Cards Count: {len(dealer.deck)}, Hands: {dealer.hands}")
-
-dealer.decision()
-
+print(testcase_avg)
+print(f"Run time: {end-start} seconds")    
 
 """
 Terminal Output: Test Run
