@@ -41,9 +41,13 @@ class Dealer:
         self.hands[playerID].append(card)
     
     def decision(self):
-        dealer_hand = [card['value'] for card in self.hands[0]] # ['9', 'A']
+        dealer_hand = ['A', 'A']
         dealer_hand_val = [self.special_values[card] if card in ['A', 'J', 'Q', 'K'] else card for card in dealer_hand]  # [9, [1, 11]]
         #print(dealer_hand_val)
+
+        if dealer_hand == ['A', 'A']:
+            dealer_hand_val = 12 
+            return dealer.card_counting((['A', 'A'], 12))
 
         ace_present = False 
 
@@ -73,12 +77,7 @@ class Dealer:
         primary_hand = None 
 
         if ace_present:
-            for i in range(2):
-                hand = [handA, handB][i]
-                val = [handA_sum, handB_sum][i]
-                
-                return dealer.card_counting((hand, val))
-            # primary_hand = (handA, handA_sum) if handA_sum >= handB_sum else (handB, handB_sum)
+            primary_hand = (handA, handA_sum) if handA_sum >= handB_sum else (handB, handB_sum)
         else:
             primary_hand = (handA, handA_sum)
 
@@ -107,7 +106,10 @@ start = timer()
 
 # Deal cards to players
 dealer = Dealer(num_players)
-
+dealer.shuffle()
+dealer.draw() 
+print(dealer.decision())
+"""
 testcase = defaultdict(list) 
 testcase_avg = defaultdict(list)
 count = 1 
@@ -133,6 +135,8 @@ end = timer()
 
 print(testcase_avg)
 print(f"Run time: {end-start} seconds")    
+"""
+
 
 """
 Terminal Output: Test Run
