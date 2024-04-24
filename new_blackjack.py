@@ -38,16 +38,13 @@ class Dealer:
     
     def deal_cards(self, playerID): 
         card = self.deck.pop()
+        print(card)
         self.hands[playerID].append(card)
     
     def decision(self):
-        dealer_hand = ['A', 'A']
+        dealer_hand = [card['value'] for card in self.hands[0]] # ['9', 'A']
         dealer_hand_val = [self.special_values[card] if card in ['A', 'J', 'Q', 'K'] else card for card in dealer_hand]  # [9, [1, 11]]
         #print(dealer_hand_val)
-
-        if dealer_hand == ['A', 'A']:
-            dealer_hand_val = 12 
-            return dealer.card_counting((['A', 'A'], 12))
 
         ace_present = False 
 
@@ -82,9 +79,9 @@ class Dealer:
             primary_hand = (handA, handA_sum)
 
         #print(f"primary_hand: {primary_hand}")
-        return dealer.card_counting(primary_hand)
+        return dealer.card_counting(dealer_hand, primary_hand)
 
-    def card_counting(self, primary_hand):
+    def card_counting(self, dealer_hand, primary_hand):
         hand, val = primary_hand
         winning_difference = 21 - val 
         deck = [card['value'] for card in self.deck]
@@ -100,15 +97,28 @@ class Dealer:
 
         #print(f"Chance of not busting: {(safe_cards_count/len(deck))*100:.2f}%")
         
-        return (val, round((safe_cards_count/len(deck))*100, 2))
+        return (dealer_hand, val, round((safe_cards_count/len(deck))*100, 2))
+    
+    def combination_evaluation(self, primary_hand):
+        dealer_hand_num, dealer_hand_sum = primary_hand
+        winning_difference = 21 - dealer_hand_sum
+
+        card_weighting = defaultdict(list) 
+        # card_weighting['A'] = self.deck.count('A')
+        for card_val in range(1, winning_difference+1):
+            if card_val == 1:
+                card_weighting[1] = f"{( (4 - len([card['value'] for hand in self.hands for card in hand if card['value'] == 'A'])) / len(self.deck)) * 100:.2f}%"
+            else:
+                card_weighting[card_val] = f"{( (4 - len([card['value'] for hand in self.hands for card in hand if card['value'] == str(card_val)])) / len(self.deck)) * 100:.2f}%"
+        print(self.hands)
+        print(card_weighting)
 
 start = timer()
 
 # Deal cards to players
 dealer = Dealer(num_players)
 dealer.shuffle()
-dealer.draw() 
-print(dealer.decision())
+dealer.draw()
 """
 testcase = defaultdict(list) 
 testcase_avg = defaultdict(list)
@@ -116,9 +126,9 @@ count = 1
 while count <= 100:
     deck = dealer.shuffle()
     hands = dealer.draw()
-    val, safe_percentage = dealer.decision()
+    hand, val, safe_percentage = dealer.decision()
     if val <= 21:
-        print(f"Count: {count}")
+        print(f"Count: {count} | Hand: {hand}")
         testcase[val].append(safe_percentage)
         count += 1
     
@@ -134,10 +144,12 @@ testcase_avg = [{i: testcase_avg[i]} for i in sorted(testcase.keys())]
 end = timer() 
 
 print(testcase_avg)
-print(f"Run time: {end-start} seconds")    
-"""
-
-
+print(f"Run time: {end-start} seconds")   
+ """
+hand, val, safe_percentage = dealer.decision()
+print(f"{safe_percentage}%")
+dealer.combination_evaluation((['11', '2'], 13))
+dealer.deal_cards(0)
 """
 Terminal Output: Test Run
 Cards Count: 44, Hands: [[{'value': '9', 'suit': '♠'}, {'value': '5', 'suit': '♥'}], [{'value': 'Q', 'suit': '♦'}, {'value': 'J', 'suit': '♣'}], [{'value': 'A', 'suit': '♦'}, {'value': '10', 'suit': '♥'}], [{'value': 'Q', 'suit': '♣'}, {'value': '6', 'suit': '♦'}]]
