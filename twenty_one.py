@@ -10,10 +10,10 @@
 # the process on retrieving the simulation result based on the testrun_amount
 # and will store the final result in a seperate Json file named "Blackjack_Testrun_Results.json". 
 
-from timeit import default_timer as timer
 from collections import defaultdict
 import random
 import json 
+from timeit import default_timer as timer
 
 num_players = 4
 
@@ -111,16 +111,20 @@ testrun_amount = input("Enter the total simulation amount: ")
 testrun_amount = int(testrun_amount)
 count = 1
 
-while count < testrun_amount:
+while count <= testrun_amount:
     deck = dealer.shuffle()    
     hands = dealer.draw()     
+    print(count)
     val, safe_percentage = dealer.decision() 
+
+    if count == testrun_amount:
+        break 
 
     # Check if the current count is a multiple of 10% of the total runs
     if count % (testrun_amount // 10) == 0:
         progress = (count * 100) // testrun_amount  # Calculate progress percentage
-        print(f"Testrun: {progress}% - {count} Runs Completed")
-
+        print(f"Testrun: {progress}%  - {count} Runs Completed")
+    
     if val <= 21:
         testcase[val].append(safe_percentage)
         count += 1
@@ -133,8 +137,10 @@ for val in testcase.keys():
     average = round((sum(tests) / len(tests)),2)
     testcase_avg[val] = (median, average) 
     
-testcase_avg = [{i: {"Median": str(testcase_avg[i][0]) + "%" , "Average": str(testcase_avg[i][1]) + "%"}} \
-                        for i in sorted(testcase.keys())] 
+end = timer()
+
+testcase_avg = [{i: {"Median": str(testcase_avg[i][0]) + "%" , "Average": str(testcase_avg[i][1]) + "%"}} for i in sorted(testcase.keys())] 
+testcase_avg += {"Run time": f"{end-start:.3f} seconds"}, {"Test case": f"{count:,}"}
 
 # Display test run result
 print(json.dumps(
@@ -149,8 +155,6 @@ file_name = 'Blackjack_Testrun_Results.json'
 with open(file_name, 'w') as file:
     json.dump(testcase_avg, file, indent=4, sort_keys=True)
 
-end = timer()
-
 print(f'Program run time: {end-start:.3f} seconds') 
-print(f'{count} test case completed')   
+print(f'{count:,} test case completed')   
 print(f'All recorded data has been stored in: {file_name}.')
