@@ -10,10 +10,10 @@
 # the process on retrieving the simulation result based on the testrun_amount
 # and will store the final result in a seperate Json file named "Blackjack_Testrun_Results.json". 
 
+from timeit import default_timer as timer
 from collections import defaultdict
 import random
 import json 
-from timeit import default_timer as timer
 
 num_players = 4
 
