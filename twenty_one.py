@@ -107,10 +107,11 @@ testcase = defaultdict(list)
 testcase_avg = defaultdict(list)
 
 # Total simulation 
-testrun_amount = 10
+testrun_amount = input("Enter the total simulation amount: ")
+testrun_amount = int(testrun_amount)
 count = 1
 
-while count <= testrun_amount:
+while count < testrun_amount:
     deck = dealer.shuffle()    
     hands = dealer.draw()     
     val, safe_percentage = dealer.decision() 
@@ -142,7 +143,7 @@ print(json.dumps(
     indent = 4
 ))
 
-file_name = 'a.json'
+file_name = 'Blackjack_Testrun_Results.json'
 
 # Save in Json file
 with open(file_name, 'w') as file:
