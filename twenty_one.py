@@ -48,13 +48,14 @@ class Dealer:
     def deal_cards(self, playerID: int): 
         card = self.deck.pop()
         self.hands[playerID].append(card)
+        
 
-    def decision(self) -> tuple: 
-        dealer_hand = [card['value'] for card in self.hands[0]] # ['9', 'A']
-        dealer_hand_val = [self.special_values[card] if card in ['A', 'J', 'Q', 'K'] else card for card in dealer_hand]  # [9, [1, 11]]
+    def hand_evaluation(self, playerID) -> tuple: 
+        hand = [card['value'] for card in self.hands[playerID]] # ['9', 'A']
+        hand_val = [self.special_values[card] if card in ['A', 'J', 'Q', 'K'] else card for card in hand]  # [9, [1, 11]]
 
-        if dealer_hand == ['A', 'A']:
-            dealer_hand_val = 12 
+        if hand == ['A', 'A']:
+            hand_val = 12 
             return dealer.card_counting((['A', 'A'], 12))
 
         ace_present = False 
@@ -63,27 +64,27 @@ class Dealer:
         handA_sum = 0
         handB = None # Second hand if Ace is present
         # Check win statement right here
-        if "A" in dealer_hand: # 2 Possible Scenario
+        if "A" in hand: # 2 Possible Scenario
             ace_present = True 
-            handA = list(map(lambda x: x.replace('[1, 11]', '1'), dealer_hand_val))  # ['1', '8']
-            handB = list(map(lambda x: x.replace('[1, 11]', '11'), dealer_hand_val)) # ['11', '8']
+            handA = list(map(lambda x: x.replace('[1, 11]', '1'), hand_val))  # ['1', '8']
+            handB = list(map(lambda x: x.replace('[1, 11]', '11'), hand_val)) # ['11', '8']
         
         else:
-            handA = dealer_hand_val
+            handA = hand_val
             handA_sum = sum([int(i) for i in handA])
 
         primary_hand = None 
 
         if ace_present:
-            primary_hand = dealer.optimized_ace_hand((handA, handB))
+            primary_hand = dealer.optimized_ace_hand(playerID, hand, (handA, handB))
         else:
             primary_hand = (handA, handA_sum)
-
+        
         return dealer.card_counting(primary_hand)
     
     # Return the optimized ace inclusive hand that allow the dealer to not bust 
-    def optimized_ace_hand(self, hands: tuple) -> tuple:
-        print(f"hand: {hands}")
+    def optimized_ace_hand(self, playerID, hand, hands: tuple) -> tuple:
+        print(f"Player {playerID} - hand: {hands}")
         handA, handB = hands
 
         handA_sum = sum([int(card_val) for card_val in handA]) 
@@ -100,6 +101,10 @@ class Dealer:
         # If both scenarios are safe <= 21
         if handA_sum <= 21 and handB_sum <= 21:
             primary_hand = (handA, handA_sum) if handA_sum >= handB_sum else (handB, handB_sum)
+            
+        # If both scenarios are bust > 21
+        if handA_sum > 21 and handB_sum > 21:
+            return f"Player {playerID} busted with the hand: {hand}"
 
         print(f"optimized ace hand: {primary_hand}")
         return primary_hand
@@ -116,71 +121,53 @@ class Dealer:
             safe_cards_count += deck.count(str(card_val))
         
         return (hand, val, round((safe_cards_count/len(deck))*100, 2))
+    
+    def win_probability(self, playerID):
+        # Player has taken all the cards and choose to stand
+        # Calculate the difference between player_hand_sum and dealer_hand_sum
+        # For example: player_hand_sum = 19[K, 6, 3], dealer_hand_sum = 14[J, 4], Deck: 47 cards remaining
+        # Difference = 19 - 14 = 5 -> Min = 5, Max = 21 - 14 = 7, Range = 5 - 7
+        # Calculate the chance to recieve a card with value in the range from 5 - 7
+        #   -> This chance is equivelent to winning/tie chance 
+        # If winning chance is greater than the average/media percentage of the card_val
+        # Take another card from the deck
+        player_hand, player_sum, player_chance = dealer.hand_evaluation(playerID)
+        dealer_hand, dealer_sum, dealer_chance = dealer.hand_evaluation(0)
         
+        min_tie_difference = player_sum - dealer_sum 
+        max_win_difference = 21 - dealer_sum 
+        
+        deck = [card['value'] for card in self.deck]
+        win_cards_count = 0 # Cards the dealer can have without getting busted
+
+        for card_val in range(max_win_difference - min_tie_difference):
+            win_cards_count += deck.count(str(card_val))
+            
+        print(f"player hand: {player_hand} - {player_sum}")
+        print(f"dealer hand: {dealer_hand} - {dealer_sum}")
+        print(f"win cards: {win_cards_count}")
+    
+    
+dealer = Dealer(num_players) 
+
+onGoingGame = True
+
+dealer.shuffle()
+dealer.draw()
+dealer.deal_cards(1)
+dealer.deal_cards(0)
+print("player",dealer.hand_evaluation(1))
+print("dealer",dealer.hand_evaluation(0))
+print("--------------------------------------------")
+dealer.win_probability(1)
 """
-The following code is used to record the repeating simulation of the process and results
-of drawing the first two cards for the player and the dealer. The result is stored in a
-json file including the average and median value of the percentage for the dealer to
-recieve a safe cards when getting a certain value of cards to begin with.
-
-# Testings
-start = timer() # Begin timer
-dealer = Dealer(num_players)
-
-# Store testcase results
-testcase = defaultdict(list) 
-testcase_avg = defaultdict(list)
-
-# Total simulation 
-testrun_amount = input("Enter the total simulation amount: ")
-testrun_amount = int(testrun_amount)
-count = 1
-
-while count <= testrun_amount:
-    deck = dealer.shuffle()    
-    hands = dealer.draw()     
-    print(count)
-    val, safe_percentage = dealer.decision() 
-
-    if count == testrun_amount:
-        break 
-
-    # Check if the current count is a multiple of 10% of the total runs
-    if count % (testrun_amount // 10) == 0:
-        progress = (count * 100) // testrun_amount  # Calculate progress percentage
-        print(f"Testrun: {progress}%  - {count} Runs Completed")
-    
-    if val <= 21:
-        testcase[val].append(safe_percentage)
-        count += 1
-    
-# Find median value of every sum of card combinations
-for val in testcase.keys():
-    tests = testcase[val] 
-    tests = sorted(tests) 
-    median = tests[len(tests)//2] 
-    average = round((sum(tests) / len(tests)),2)
-    testcase_avg[val] = (median, average) 
-    
-end = timer()
-
-testcase_avg = [{i: {"Median": str(testcase_avg[i][0]) + "%" , "Average": str(testcase_avg[i][1]) + "%"}} for i in sorted(testcase.keys())] 
-testcase_avg += {"Run time": f"{end-start:.3f} seconds"}, {"Test case": f"{count:,}"}
-
-# Display test run result
-print(json.dumps(
-    testcase_avg,
-    sort_keys = True,
-    indent = 4
-))
-
-file_name = 'Blackjack_Testrun_Results.json'
-
-# Save in Json file
-with open(file_name, 'w') as file:
-    json.dump(testcase_avg, file, indent=4, sort_keys=True)
-
-print(f'Program run time: {end-start:.3f} seconds') 
-print(f'{count:,} test case completed')   
-print(f'All recorded data has been stored in: {file_name}.')
-"""
+while onGoingGame:
+    print(dealer.hands)
+    userDecision = input("Do you want a card: ")
+    if userDecision == 'y':
+        dealer.deal_cards(1)
+    elif userDecision == 'n':
+        print(dealer.hands)
+        print(dealer.decision()) 
+        break
+"""    
