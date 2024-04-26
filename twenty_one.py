@@ -15,7 +15,7 @@ import random
 import json 
 from timeit import default_timer as timer
 
-num_players = 4
+num_players = 2
 
 class Dealer:
     def __init__(self, num_players):
@@ -62,14 +62,11 @@ class Dealer:
         handA = []  
         handA_sum = 0
         handB = None # Second hand if Ace is present
-        handB_sum = None
         # Check win statement right here
         if "A" in dealer_hand: # 2 Possible Scenario
             ace_present = True 
             handA = list(map(lambda x: x.replace('[1, 11]', '1'), dealer_hand_val))  # ['1', '8']
             handB = list(map(lambda x: x.replace('[1, 11]', '11'), dealer_hand_val)) # ['11', '8']
-            handA_sum = sum([int(i) for i in handA])
-            handB_sum = sum([int(i) for i in handB]) 
         
         else:
             handA = dealer_hand_val
@@ -78,15 +75,38 @@ class Dealer:
         primary_hand = None 
 
         if ace_present:
-            primary_hand = (handA, handA_sum) if handA_sum >= handB_sum else (handB, handB_sum)
+            primary_hand = dealer.optimized_ace_hand((handA, handB))
         else:
             primary_hand = (handA, handA_sum)
 
         return dealer.card_counting(primary_hand)
     
+    # Return the optimized ace inclusive hand that allow the dealer to not bust 
+    def optimized_ace_hand(self, hands: tuple) -> tuple:
+        print(f"hand: {hands}")
+        handA, handB = hands
+
+        handA_sum = sum([int(card_val) for card_val in handA]) 
+        handB_sum = sum([int(card_val) for card_val in handB])
+
+        primary_hand = None
+
+        # If either scenario goes bust and alternative is safe -> return the safe hand
+        if handA_sum > 21 and handB_sum <= 21:
+            primary_hand = (handB, handB_sum)
+        elif handB_sum > 21 and handA_sum <= 21:
+            primary_hand = (handA, handA_sum) 
+        
+        # If both scenarios are safe <= 21
+        if handA_sum <= 21 and handB_sum <= 21:
+            primary_hand = (handA, handA_sum) if handA_sum >= handB_sum else (handB, handB_sum)
+
+        print(f"optimized ace hand: {primary_hand}")
+        return primary_hand
+    
     # Calculate the chance of the dealer to draw a safe card 
     def card_counting(self, primary_hand: tuple) -> tuple:
-        val = primary_hand[1]
+        hand, val = primary_hand
         winning_difference = 21 - val 
         deck = [card['value'] for card in self.deck]
         safe_cards_count = 0 # Cards the dealer can have without getting busted
@@ -95,8 +115,13 @@ class Dealer:
         for card_val in range(2, winning_difference+1):
             safe_cards_count += deck.count(str(card_val))
         
-        return (val, round((safe_cards_count/len(deck))*100, 2))
-    
+        return (hand, val, round((safe_cards_count/len(deck))*100, 2))
+        
+"""
+The following code is used to record the repeating simulation of the process and results
+of drawing the first two cards for the player and the dealer. The result is stored in a
+json file including the average and median value of the percentage for the dealer to
+recieve a safe cards when getting a certain value of cards to begin with.
 
 # Testings
 start = timer() # Begin timer
@@ -158,3 +183,4 @@ with open(file_name, 'w') as file:
 print(f'Program run time: {end-start:.3f} seconds') 
 print(f'{count:,} test case completed')   
 print(f'All recorded data has been stored in: {file_name}.')
+"""
