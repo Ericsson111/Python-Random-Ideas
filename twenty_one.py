@@ -11,18 +11,21 @@
 # and will store the final result in a seperate Json file named "Blackjack_Testrun_Results.json". 
 
 from collections import defaultdict
-from timeit import default_timer as timer
 import random
 import json 
+from timeit import default_timer as timer
 
 num_players = 2
 
 class Player:
     def __init__(self):
         self.playerID = 1
+        self.currency = 100
+        self.hit_status = True 
         self.stand_status = False 
 
     def player_stand(self):
+        self.hit_status = False
         self.stand_status = True 
 
 class Dealer:
@@ -126,7 +129,7 @@ class Dealer:
         safe_cards_count += deck.count('A')
         for card_val in range(2, winning_difference+1):
             if card_val == 10:
-               for card in ['10', 'J', 'Q', 'K']:
+               for card in ['10', 'J', 'Q', 'K']: # J, Q, K are also valued at 10
                    safe_cards_count += deck.count(card)
             else:
                 safe_cards_count += deck.count(str(card_val))
@@ -180,22 +183,27 @@ class Dealer:
                 print(f"possible cards: {possible_cards_count}")
 
                 draw_level = False 
+
+                # Calculate draw possibility -> Dealer must also have a hand with sum of 21
+                draw_difference = player_sum - dealer_sum
+                draw_difference_count = deck.count(str(draw_difference))
+                draw_percentage = (draw_difference_count/len(deck)) * 100
+
                 if winning_possibility == 0:
                     draw_level = True
                 
                 if draw_level: 
                     # Dealer is required to take minimum of 2 card to surpass/level player sum or bust
                     # Assumption is player sum is <= 21
-
-                    # Use safe card possibility
-                    return (0.00, dealer_safe_card_chance)
+                    return (0.00, draw_percentage, dealer_safe_card_chance)
                 
                 else:
                     # Return winning possibility value 
-                    return (round((winning_possibility/len(deck)) * 100, 2), dealer_safe_card_chance)
+                    winning_possibility = (winning_possibility/len(deck)) * 100
+                    return (round(winning_possibility, 2), round(draw_percentage, 2), dealer_safe_card_chance)
             else:
                 print(f"dealer sum: {dealer_sum}, player sum: {player_sum}")
-                return (None, None)
+                return (None, None, None)
             
 dealer = Dealer(num_players) 
 player = Player()
@@ -203,7 +211,28 @@ onGoingGame = True
 
 dealer.shuffle()
 dealer.draw()
+player.player_stand()
+winning_chance, draw_percentage, safe_chance = dealer.win_probability()
+if (winning_chance, draw_percentage, safe_chance) != (None, None, None):
+    print(f"winning chance: {winning_chance}%, draw percentage: {draw_percentage}%, safe chance: {safe_chance}%")
+    
+"""
+Terminal Output:
+Player 1 - hand: (['1', '7'], ['11', '7'])
+optimized ace hand: (['11', '7'], 18)
+safe_cards_count: 10, deck: 48
+safe_cards_count: 48, deck: 48
+dealer win hand: [19, 20, 21]
+dealer win card: ['10', '11']
+winning possibility: 39.58%
+player hand: ['11', '7'] - player sum: 18 - safe card chance: 20.83
+dealer hand: ['3', '6'] - dealer sum: 9 - safe card chance: 100.0
+possible cards: defaultdict(<class 'dict'>, {'A': 3, '10': 4, 'J': 4, 'Q': 4, 'K': 4})
+winning chance: 39.58%, draw percentage: 8.33%, safe chance: 100.0%
+"""
 
+
+"""
 while onGoingGame:
     print(dealer.hands)
     userDecision = input("Do you want a card: ")
@@ -212,9 +241,9 @@ while onGoingGame:
         print(dealer.hands[1])
     elif userDecision == 'n':
         player.player_stand()
-        winning_chance, safe_chance = dealer.win_probability()
-        print(f"winning chance: {winning_chance}, safe chance: {safe_chance}")
+        winning_chance, draw_percentage, safe_chance = dealer.win_probability()
+        print(f"winning chance: {winning_chance}, draw percentage: {draw_percentage}, safe chance: {safe_chance}")
         dealer.deal_cards(0)
         print(dealer.hands)
         break
-
+"""
