@@ -11,11 +11,51 @@
 # and will store the final result in a seperate Json file named "Blackjack_Testrun_Results.json". 
 
 from collections import defaultdict
+from timeit import default_timer as timer
 import random
 import json 
-from timeit import default_timer as timer
 
-num_players = 2
+class Game:
+    def __init__(self):
+        self.num_players = 2
+        self.game_status = True 
+        self.winner = None 
+        self.winner_hand = None
+
+    def rules(self, player_sum, dealer_sum):
+        if player_sum > 21:
+            game.winner = "Dealer"
+            print("You busted! Dealer win!")
+
+        if dealer_sum > 21:
+            game.winner = "Player"
+            print("The Dealer has busted. You win!")
+
+        if player_sum == 21:
+            print("You got 21! Blackjack! So you win!")
+            if dealer_sum == 21:
+                game.winner = "Tie" 
+                print("The Dealer also got 21. Tough Break.")
+            else:
+                game.winner = "Player"
+            return
+        
+        elif dealer_sum == 21:
+            game.winner = "Dealer"
+            print("The Dealer got 21! Tough Break, you lose!")
+            return
+        
+        if player_sum < 21 and dealer_sum < 21:
+            if player_sum > dealer_sum:
+                game.winner = "Player"
+                print("You beat the Dealer! You got lucky punk.")
+            elif player_sum == dealer_sum:
+                game.winner = "Tie"
+                print("It is a push, no one wins!")
+            elif player_sum < dealer_sum:
+                game.winner = "Dealer"
+                print("Dealer wins! Better luck next time.")
+        return
 
 class Player:
     def __init__(self):
@@ -31,6 +71,7 @@ class Player:
 class Dealer:
     def __init__(self, num_players):
         self.num_players = num_players
+        self.playerID = 0
         self.hands = [] # Store the hands of each player
         self.deck = []
         self.special_values = {'A': '[1, 11]', 
@@ -39,7 +80,7 @@ class Dealer:
                                'K': '10'}
         
     def shuffle(self) -> list:
-        self.hands = [[] for _ in range(num_players)]
+        self.hands = [[] for _ in range(game.num_players)]
         suits = ['♠', '♥', '♦', '♣']
         values = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K']
         self.deck = [{'value': value, 'suit': suit} for value in values for suit in suits]
@@ -122,21 +163,27 @@ class Dealer:
     # Calculate the chance of the dealer to draw a safe card 
     def card_counting(self, primary_hand: tuple) -> tuple:
         hand, val = primary_hand
-        winning_difference = 21 - val if 21 - val <= 11 else 21 - 11
-        deck = [card['value'] for card in self.deck]
-        safe_cards_count = 0 # Cards the dealer can have without getting busted
+        if val <= 21:
+            winning_difference = 21 - val if 21 - val <= 11 else 21 - 11
+            deck = [card['value'] for card in self.deck]
+            safe_cards_count = 0 # Cards the dealer can have without getting busted
 
-        safe_cards_count += deck.count('A')
-        for card_val in range(2, winning_difference+1):
-            if card_val == 10:
-               for card in ['10', 'J', 'Q', 'K']: # J, Q, K are also valued at 10
-                   safe_cards_count += deck.count(card)
-            else:
-                safe_cards_count += deck.count(str(card_val))
+            safe_cards_count += deck.count('A')
+            for card_val in range(2, winning_difference+1):
+                if card_val == 10:
+                    for card in ['10', 'J', 'Q', 'K']: # J, Q, K are also valued at 10
+                        safe_cards_count += deck.count(card)
+                else:
+                    safe_cards_count += deck.count(str(card_val))
 
-        print(f"safe_cards_count: {safe_cards_count}, deck: {len(deck)}")        
-        
-        return (hand, val, round((safe_cards_count/len(deck))*100, 2))
+            # print(f"safe_cards_count: {safe_cards_count}, deck: {len(deck)}")        
+            
+            return (hand, val, round((safe_cards_count/len(deck))*100, 2))
+        else: # Busted
+            return (hand, val, 0.00)
+    
+    def hand_sum(self, playerID):
+        return dealer.hand_evaluation(playerID)[1]
     
     def win_probability(self):
         # Player has taken all the cards and choose to stand
@@ -147,92 +194,80 @@ class Dealer:
         #   -> This chance is equivelent to winning/tie chance 
         # If winning chance is greater than the average/media percentage of the card_val
         # Take another card from the deck
-        if player.stand_status:
-            player_hand, player_sum, player_safe_card_chance = dealer.hand_evaluation(player.playerID)
-            dealer_hand, dealer_sum, dealer_safe_card_chance = dealer.hand_evaluation(0)
+        
+        player_hand, player_sum, player_safe_card_chance = dealer.hand_evaluation(player.playerID)
+        dealer_hand, dealer_sum, dealer_safe_card_chance = dealer.hand_evaluation(0)
 
-            if dealer_sum <= player_sum:
-                
-                deck = [card['value'] for card in self.deck]
-                possible_cards_count = defaultdict(dict) # Cards the dealer can have without getting busted
+        if player_sum > 21:
+            return (100.00, 0.00, 100.00)
 
-                player_max_difference = 21 - player_sum 
-                dealer_win_hand = [player_sum + difference for difference in range(1, player_max_difference + 1)]
-
-                dealer_win_card = [str(diff) for card_val in dealer_win_hand if (diff := card_val - dealer_sum) <= 11]
-                print(f"dealer win hand: {dealer_win_hand}\ndealer win card: {dealer_win_card}")
-
-                if '1' in dealer_win_card or '11' in dealer_win_card:
-                    possible_cards_count['A'] = deck.count('A')
-                    try:
-                        dealer_win_card.remove('1')
-                    except ValueError:
-                        dealer_win_card.remove('11')
-
-                for card_val in dealer_win_card:
-                    if card_val == '10':
-                        for card in ['10', 'J', 'Q', 'K']:
-                            possible_cards_count[card] = deck.count(card)
-                    else:
-                        possible_cards_count[card_val] = deck.count(str(card_val))
-
-                winning_possibility = sum([possible_cards_count[card_val] for card_val in possible_cards_count.keys()])
-                print(f"winning possibility: {(winning_possibility/len(deck)) * 100:.2f}%")
-                print(f"player hand: {player_hand} - player sum: {player_sum} - safe card chance: {player_safe_card_chance}")
-                print(f"dealer hand: {dealer_hand} - dealer sum: {dealer_sum} - safe card chance: {dealer_safe_card_chance}")
-                print(f"possible cards: {possible_cards_count}")
-
-                draw_level = False 
-
-                # Calculate draw possibility -> Dealer must also have a hand with sum of 21
-                draw_difference = player_sum - dealer_sum
-                draw_difference_count = deck.count(str(draw_difference))
-                draw_percentage = (draw_difference_count/len(deck)) * 100
-
-                if winning_possibility == 0:
-                    draw_level = True
-                
-                if draw_level: 
-                    # Dealer is required to take minimum of 2 card to surpass/level player sum or bust
-                    # Assumption is player sum is <= 21
-                    return (0.00, draw_percentage, dealer_safe_card_chance)
-                
-                else:
-                    # Return winning possibility value 
-                    winning_possibility = (winning_possibility/len(deck)) * 100
-                    return (round(winning_possibility, 2), round(draw_percentage, 2), dealer_safe_card_chance)
-            else:
-                print(f"dealer sum: {dealer_sum}, player sum: {player_sum}")
-                return (None, None, None)
+        elif dealer_sum <= player_sum:
             
-dealer = Dealer(num_players) 
+            deck = [card['value'] for card in self.deck]
+            potential_win_card = defaultdict(dict) # Cards the dealer can have without getting busted
+
+            player_max_difference = 21 - player_sum 
+            dealer_win_hand = [player_sum + difference for difference in range(1, player_max_difference + 1)]
+
+            dealer_win_card = [str(diff) for card_val in dealer_win_hand if (diff := card_val - dealer_sum) <= 11]
+            print(f"dealer win hand: {dealer_win_hand}\ndealer win card: {dealer_win_card}")
+
+            if '1' in dealer_win_card or '11' in dealer_win_card:
+                potential_win_card['A'] = deck.count('A')
+                try:
+                    dealer_win_card.remove('1')
+                except ValueError:
+                    dealer_win_card.remove('11')
+
+            for card_val in dealer_win_card:
+                if card_val == '10':
+                    for card in ['10', 'J', 'Q', 'K']:
+                        potential_win_card[card] = deck.count(card)
+                else:
+                    potential_win_card[card_val] = deck.count(str(card_val))
+
+            winning_possibility = sum([potential_win_card[card_val] for card_val in potential_win_card.keys()])
+            print(f"winning possibility: {(winning_possibility/len(deck)) * 100:.2f}%")
+            print(f"player hand: {player_hand} - player sum: {player_sum} - safe card chance: {player_safe_card_chance}")
+            print(f"dealer hand: {dealer_hand} - dealer sum: {dealer_sum} - safe card chance: {dealer_safe_card_chance}")
+            print(f"potential winning cards: {potential_win_card}")
+
+            draw_level = False 
+
+            # Calculate draw possibility -> Dealer must also have a hand with sum of 21
+            draw_difference = player_sum - dealer_sum
+            if draw_difference == 0:
+                draw_difference == len(deck)
+            elif draw_difference == 1:
+                draw_difference_count = deck.count("A")
+            else:
+                draw_difference_count = deck.count(str(draw_difference))
+            draw_percentage = (draw_difference_count/len(deck)) * 100
+
+            if winning_possibility == 0:
+                draw_level = True
+            
+            if draw_level: 
+                # Dealer is required to take minimum of 2 card to surpass/level player sum or bust
+                # Assumption is player sum is <= 21
+                return (0.00, round(draw_percentage, 2), dealer_safe_card_chance)
+            
+            else:
+                # Return winning possibility value 
+                winning_possibility = (winning_possibility/len(deck)) * 100
+                return (round(winning_possibility, 2), round(draw_percentage, 2), dealer_safe_card_chance)
+        else:
+            print(f"dealer sum: {dealer_sum}, player sum: {player_sum}")
+            return (100.00, 0.00, 100.00)
+            
+game = Game()
+dealer = Dealer(game.num_players) 
 player = Player()
 onGoingGame = True
 
 dealer.shuffle()
 dealer.draw()
-player.player_stand()
-winning_chance, draw_percentage, safe_chance = dealer.win_probability()
-if (winning_chance, draw_percentage, safe_chance) != (None, None, None):
-    print(f"winning chance: {winning_chance}%, draw percentage: {draw_percentage}%, safe chance: {safe_chance}%")
-    
-"""
-Terminal Output:
-Player 1 - hand: (['1', '7'], ['11', '7'])
-optimized ace hand: (['11', '7'], 18)
-safe_cards_count: 10, deck: 48
-safe_cards_count: 48, deck: 48
-dealer win hand: [19, 20, 21]
-dealer win card: ['10', '11']
-winning possibility: 39.58%
-player hand: ['11', '7'] - player sum: 18 - safe card chance: 20.83
-dealer hand: ['3', '6'] - dealer sum: 9 - safe card chance: 100.0
-possible cards: defaultdict(<class 'dict'>, {'A': 3, '10': 4, 'J': 4, 'Q': 4, 'K': 4})
-winning chance: 39.58%, draw percentage: 8.33%, safe chance: 100.0%
-"""
 
-
-"""
 while onGoingGame:
     print(dealer.hands)
     userDecision = input("Do you want a card: ")
@@ -242,8 +277,26 @@ while onGoingGame:
     elif userDecision == 'n':
         player.player_stand()
         winning_chance, draw_percentage, safe_chance = dealer.win_probability()
-        print(f"winning chance: {winning_chance}, draw percentage: {draw_percentage}, safe chance: {safe_chance}")
-        dealer.deal_cards(0)
-        print(dealer.hands)
+        if (winning_chance, draw_percentage, safe_chance) != (None, None, None):
+            print(f"winning chance: {winning_chance}%, draw percentage: {draw_percentage}%, safe chance: {safe_chance}%")
+            player_sum = dealer.hand_sum(player.playerID)
+            dealer_sum = dealer.hand_sum(dealer.playerID)
+            game.rules(player_sum, dealer_sum)
+            print(game.winner)
         break
+
+    
+"""
+Terminal Output:
+[[{'value': '6', 'suit': '♥'}, {'value': '6', 'suit': '♠'}], [{'value': 'J', 'suit': '♠'}, {'value': '9', 'suit': '♠'}]]
+Do you want a card: n
+dealer win hand: [20, 21]
+dealer win card: ['8', '9']
+winning possibility: 14.58%
+player hand: ['10', '9'] - player sum: 19 - safe card chance: 16.67
+dealer hand: ['6', '6'] - dealer sum: 12 - safe card chance: 68.75
+potential winning cards: defaultdict(<class 'dict'>, {'8': 4, '9': 3})
+winning chance: 14.58%, draw percentage: 8.33%, safe chance: 68.75%
+You beat the Dealer! You got lucky punk.
+Game winner: Player
 """
