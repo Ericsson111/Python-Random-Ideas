@@ -60,7 +60,15 @@ class Game:
         print('   '.join(middle_bottom))       # Print the middle bottom part of each card
         print('   '.join([bottom] * len(cards)))  # Print the bottom line for all cards
 
-    def rules(self, player_sum, dealer_sum):
+    def rules(self, player_sum: int, dealer_sum: int):
+        """
+        This function takes the sum of player hand and the dealer hand and determine the winner,
+        which will be modified in game.winner
+        
+        Args:
+            player_sum (int): The sum value of the player's hand
+            dealer_sum (int): The sum value of the dealer's hand
+        """
         if player_sum > 21:
             game.winner = "Dealer"
             print("You busted! Dealer win!")
@@ -103,6 +111,7 @@ class Player:
         self.stand_status = False 
 
     def player_stand(self):
+        """ This function modify player's status when making the decision to stand """
         self.hit_status = False
         self.stand_status = True 
 
@@ -118,6 +127,10 @@ class Dealer:
                                'K': '10'}
         
     def shuffle(self) -> list:
+        """
+        This function uses all the values and their corresponding suits to build a deck for the game
+        and is shuffled using random.shuffle()
+        """
         self.hands = [[] for _ in range(game.num_players)]
         suits = ['♠', '♥', '♦', '♣']
         values = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K']
@@ -127,7 +140,7 @@ class Dealer:
     
     def draw(self) -> list:
         # Every Player (Including the Dealer)
-        # Recieves 2 cards at start
+        # Recieves 2 cards at the start of the game
         for _ in range(2):
             for playerID in range(self.num_players):
                 card = self.deck.pop() # {'value': '2', 'suit': '♠'}
@@ -136,10 +149,12 @@ class Dealer:
         return self.hands 
     
     def deal_cards(self, playerID: int): 
+        # Deal cards to the player who requested it using playerID
         card = self.deck.pop()
         self.hands[playerID].append(card)
         
     def hand_evaluation(self, playerID) -> tuple: 
+        # Evaluate the sum of the player's hand given playerID as identifier
         hand = [card['value'] for card in self.hands[playerID]] # ['9', 'A']
         hand_val = [self.special_values[card] if card in ['A', 'J', 'Q', 'K'] else card for card in hand]  # [9, [1, 11]]
 
@@ -172,7 +187,7 @@ class Dealer:
         
         return dealer.card_counting(primary_hand)
     
-    # Return the optimized ace inclusive hand that allow the dealer to not bust 
+    # Return the optimized ace inclusive hand that allow the requested hand to not bust 
     def optimized_ace_hand(self, playerID, hand, hands: tuple) -> tuple:
         handA, handB = hands
 
@@ -228,8 +243,8 @@ class Dealer:
         #   -> This chance is equivelent to winning/tie chance 
         # If winning chance is greater than the average/media percentage of the card_val
         # Take another card from the deck
-        player_bust_cards_count, player_hand, player_sum, player_safe_card_chance = dealer.hand_evaluation(player.playerID)
-        dealer_bust_cards_count, dealer_hand, dealer_sum, dealer_safe_card_chance = dealer.hand_evaluation(0)
+        player_sum = dealer.hand_evaluation(player.playerID)[2]
+        dealer_bust_cards_count, _, dealer_sum, dealer_safe_card_chance = dealer.hand_evaluation(0)
 
         if player_sum > 21:
             return (100.00, 0.00, 100.00, 0.00)
@@ -376,6 +391,7 @@ if game.winner == None:
                     break 
             player_sum = dealer.hand_sum(player.playerID)
             dealer_sum = dealer.hand_sum(dealer.playerID)
+            print("______________________________________")
             game.rules(player_sum, dealer_sum)
             print(f"Game winner: {game.winner}")
             break
