@@ -325,9 +325,9 @@ class Dealer:
             # Check draw possibility
             if draw_percentage == 100:
                 return "stand"
-            elif draw_percentage > dealer_bust_chance - winning_percentage:
-                return "Hit"
             if safe_percentage > dealer_bust_chance:
+                return "Hit"
+            elif winning_percentage + draw_percentage + safe_percentage > dealer_bust_chance:
                 return "Hit"
             else:
                 return "Stand"
@@ -373,14 +373,14 @@ if game.winner == None:
             winning_chance, draw_percentage, safe_chance, dealer_bust_chance = dealer.win_probability()
             game.display_hand(player.playerID, dealer.hands[player.playerID], True)
             print("Player hand\n")
-            # print(f"Dealer Statistics: winning chance: {winning_chance}%, draw percentage: {draw_percentage}%, safe chance: {safe_chance}%, bust chance: {dealer_bust_chance:.2f}%")
+            print(f"Dealer Statistics: winning chance: {winning_chance:.2f}%, draw percentage: {draw_percentage:.2f}%, safe chance: {safe_chance:.2f}%, bust chance: {dealer_bust_chance:.2f}%")
         elif userDecision == 'stand':
             player.player_stand()
             while True:
                 decision = dealer.decision()
                 print(f"dealer decision (player: stand): {decision}")
                 winning_chance, draw_percentage, safe_chance, dealer_bust_chance = dealer.win_probability()
-                # print(f"Dealer Statistics: winning chance: {winning_chance}%, draw percentage: {draw_percentage}%, safe chance: {safe_chance}%, dealer bust chance: {dealer_bust_chance:.2f}%")
+                print(f"Dealer Statistics: winning chance: {winning_chance}%, draw percentage: {draw_percentage}%, safe chance: {safe_chance}%, dealer bust chance: {dealer_bust_chance:.2f}%")
                 if decision == "Hit":
                     dealer.deal_cards(dealer.playerID)
                     game.display_hand(dealer.playerID, dealer.hands[dealer.playerID], False)
@@ -389,7 +389,7 @@ if game.winner == None:
                     break 
             player_sum = dealer.hand_sum(player.playerID)
             dealer_sum = dealer.hand_sum(dealer.playerID)
-            print("_______________________________________")
+            print("______________________________________")
             game.rules(player_sum, dealer_sum)
             print(f"Game winner: {game.winner}")
             break
