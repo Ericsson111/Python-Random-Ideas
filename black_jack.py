@@ -112,7 +112,7 @@ class Game:
                     break 
 
     def display_statistics(self):
-        print("\nPlayer Statistics:")
+        print("Player Statistics:")
         print("----------------------") 
         print(f"|Player win: {self.player_win_count:^5}   |")
         print(f"|Tie game:   {self.tie_game_count:^5}   |")
