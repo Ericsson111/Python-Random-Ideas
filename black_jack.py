@@ -1,5 +1,5 @@
 # Python 3.9.6 64-bit
-# 2024/4/27
+# 2024/4/28
 # Ericsson Cui
 
 # This program calculates the median and average percentage of the dealer 
@@ -436,7 +436,7 @@ class Dealer:
         #   -> Dealer drawing a hand with sum greater than player
         winning_percentage, draw_percentage, safe_percentage, dealer_bust_chance = self.win_probability() 
 
-        if winning_percentage == 100:
+        if winning_percentage == 100: # Leave it
             return "Stand"
         
         if winning_percentage > dealer_bust_chance: # More likely to win than bust
@@ -445,7 +445,10 @@ class Dealer:
         elif winning_percentage < dealer_bust_chance: # More likely to bust
             # If draw
             if draw_percentage == 100: 
-                return "stand"
+                if safe_percentage >= 66:
+                    return "Hit"
+                else:
+                    return "stand"
             
             # Next draw is fairly safe
             if safe_percentage > dealer_bust_chance:
