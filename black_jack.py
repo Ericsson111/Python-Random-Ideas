@@ -13,6 +13,8 @@
 from collections import defaultdict
 import random
 import time
+import os 
+
 
 class Game:
     def __init__(self):
@@ -22,6 +24,15 @@ class Game:
         self.player_win_count = 0
         self.dealer_win_count = 0
         self.total_game_count = 0
+
+    def clear_terminal(self):
+        os.system("cls || clear")
+
+    def display_hands(self):
+        self.display_hand(dealer.playerID, dealer.hands[dealer.playerID], False)
+        print("Dealer hand\n")
+        self.display_hand(player.playerID, dealer.hands[player.playerID], True)
+        print("Player hand\n") 
 
     def main_game(self):
         play_game = True
@@ -34,10 +45,7 @@ class Game:
             dealer.draw()
 
             # Display hand
-            self.display_hand(dealer.playerID, dealer.hands[dealer.playerID], False)
-            print("Dealer hand\n")
-            self.display_hand(player.playerID, dealer.hands[player.playerID], True)
-            print("Player hand\n") 
+            self.display_hands() 
 
             player_sum = dealer.hand_sum(player.playerID)
             dealer_sum = dealer.hand_sum(dealer.playerID)
@@ -55,40 +63,48 @@ class Game:
 
             # Game begins
             if self.winner == None:
+
                 while onGoingGame:
+
                     userDecision = input("Hit/Stand: ")
                     userDecision = userDecision.strip().lower()
-                    if userDecision == 'hit' or userDecision == 'h':
+
+                    self.clear_terminal() 
+
+                    if userDecision in ['h', 'hit']:
                         dealer.deal_cards(player.playerID)
                         winning_chance, draw_percentage, safe_chance, dealer_bust_chance = dealer.win_probability()
-                        self.display_hand(player.playerID, dealer.hands[player.playerID], True)
-                        print("Player hand\n")
+                        self.display_hands()
                         print(f"Dealer Statistics: winning chance: {winning_chance:.2f}%, draw percentage: {draw_percentage:.2f}%, safe chance: {safe_chance:.2f}%, bust chance: {dealer_bust_chance:.2f}%")
-                    elif userDecision == 'stand' or userDecision == 's':
+
+                    elif userDecision in ['s', 'stand']:
                         player.player_stand()
+
                         while True:
                             decision = dealer.decision()
                             print(f"dealer decision (player: stand): {decision}")
                             winning_chance, draw_percentage, safe_chance, dealer_bust_chance = dealer.win_probability()
                             print(f"Dealer Statistics: winning chance: {winning_chance:.2f}%, draw percentage: {draw_percentage:.2f}%, safe chance: {safe_chance:.2f}%, bust chance: {dealer_bust_chance:.2f}%")
+                            self.clear_terminal() 
                             if decision == "Hit":
                                 dealer.deal_cards(dealer.playerID)
-                                self.display_hand(dealer.playerID, dealer.hands[dealer.playerID], False)
-                                print("Dealer hand\n") 
+                                self.display_hands() 
                                 time.sleep(1)
                             else:
-                                break 
-                        player_sum = dealer.hand_sum(player.playerID)
-                        dealer_sum = dealer.hand_sum(dealer.playerID)
-                        print("_________________________________________")
-                        self.rules(player_sum, dealer_sum)
-                        print(f"Game winner: {self.winner}")
+                                self.display_hands()
+                                break      
                         break
 
+            self.clear_terminal()
             self.display_hand(dealer.playerID, dealer.hands[dealer.playerID], True)
             print("Dealer hand\n")
             self.display_hand(player.playerID, dealer.hands[player.playerID], True)
-            print("Player hand\n")
+            print("Player hand\n") 
+            player_sum = dealer.hand_sum(player.playerID)
+            dealer_sum = dealer.hand_sum(dealer.playerID)
+            print("_________________________________________")
+            self.rules(player_sum, dealer_sum)
+            print(f"Game winner: {self.winner}")
 
             if game.winner == "Dealer":
                 self.dealer_win_count += 1
@@ -102,16 +118,17 @@ class Game:
             print("-----------------------------------------")
             while True:
                 rematchDecision = input("Do you want to play again?(y/n): ")
-                print("-----------------------------------------\n")
                 rematchDecision = rematchDecision.strip().lower()
-                if rematchDecision == "n":
+                if rematchDecision in ['n', 'no']:
                     play_game = False
                     self.display_statistics() 
                     break 
-                elif rematchDecision == 'y':
+                elif rematchDecision in ['y', 'yes']:
+                    self.clear_terminal() 
                     break 
 
     def display_statistics(self):
+        self.clear_terminal()
         print("Player Statistics:")
         print("----------------------") 
         print(f"|Player win: {self.player_win_count:^5}   |")
@@ -312,6 +329,7 @@ class Dealer:
         # If both scenarios are bust > 21
         if handA_sum > 21 and handB_sum > 21:
             game.winner = self.playerID if playerID == player.playerID else player.playerID
+            primary_hand = (handA, handA_sum) if handA_sum <= handB_sum else (handB, handB_sum)
 
         return primary_hand
     
@@ -447,7 +465,7 @@ class Dealer:
                 return "Hit"
             else:
                 return "Stand"
-            
+
 if __name__ == "__main__":
     game = Game()
     dealer = Dealer(game.num_players) 
