@@ -1,5 +1,5 @@
 # Python 3.9.6 64-bit
-# 2024/4/27
+# 2024/4/28
 # Ericsson Cui
 
 # This program calculates the median and average percentage of the dealer 
@@ -9,15 +9,154 @@
 # including: shuffling, drawing, dealing cards, and more. The main code covers
 # the process on retrieving the simulation result based on the testrun_amount
 # and will store the final result in a seperate Json file named "Blackjack_Testrun_Results.json". 
-
 from collections import defaultdict
 import random
+import time
+import os 
 
 class Game:
     def __init__(self):
         self.num_players = 2
+        self.player_bet = 0
         self.winner = None 
-
+        self.tie_game_count = 0
+        self.player_win_count = 0
+        self.dealer_win_count = 0
+        self.total_game_count = 0
+        
+    def clear_terminal(self):
+        os.system("cls || clear")
+        
+    def display_hands(self):
+        self.display_hand(dealer.playerID, dealer.hands[dealer.playerID], False)
+        print("Dealer hand\n")
+        self.display_hand(player.playerID, dealer.hands[player.playerID], True)
+        print("Player hand\n") 
+        
+    def check_for_bust(self, sum):
+        if sum > 21:
+            return True
+        else:
+            return False
+        
+    def main_game(self):
+        play_game = True
+        print("\n------- Welcome to my Blackjack game! -------\n")
+        while play_game:
+            print(f"Bankroll: ${player.bankroll}")
+            onGoingGame = True
+            self.winner = None
+            self.player_bet = 0
+            
+            while True:
+                amount = input("Enter bet amount\n(1, 5, 25, 100, 500, 1000): ")
+                if amount in ['1', '5', '25', '100', '500', '1000']:
+                    if player.place_bet(int(amount)):
+                        break
+                    else:
+                        print("Invalid Balance! You do not have enough fund.")
+                else:
+                    print("Please enter proper amount(1, 5, 25, 100, 500, 1000)")
+            
+            dealer.shuffle()
+            dealer.draw()
+            # Display hand
+            self.display_hands() 
+            player_sum = dealer.hand_sum(player.playerID)
+            dealer_sum = dealer.hand_sum(dealer.playerID)
+            if dealer_sum == 21 and dealer_sum == player_sum:
+                self.winner = "Tie"
+                self.rules(player_sum, dealer_sum)
+            elif dealer_sum == 21:
+                self.winner = "Dealer"
+                self.rules(player_sum, dealer_sum)
+            elif player_sum == 21:
+                self.winner = "Player"
+                self.rules(player_sum, dealer_sum)
+            # Game begins
+            if self.winner == None:
+                while onGoingGame:
+                    userDecision = input("Hit/Stand: ")
+                    userDecision = userDecision.strip().lower()
+                    self.clear_terminal() 
+                    if userDecision in ['h', 'hit']:
+                        dealer.deal_cards(player.playerID)
+                        winning_chance, draw_percentage, safe_chance, dealer_bust_chance = dealer.win_probability()
+                        self.display_hands()
+                        player_sum = dealer.hand_sum(player.playerID)
+                        if self.check_for_bust(player_sum):
+                            break 
+                        print(f"Dealer Statistics: winning chance: {winning_chance:.2f}%, draw percentage: {draw_percentage:.2f}%, safe chance: {safe_chance:.2f}%, bust chance: {dealer_bust_chance:.2f}%")
+                    elif userDecision in ['s', 'stand']:
+                        player.player_stand()
+                        while True:
+                            decision = dealer.decision()
+                            print(f"dealer decision (player: stand): {decision}")
+                            winning_chance, draw_percentage, safe_chance, dealer_bust_chance = dealer.win_probability()
+                            print(f"Dealer Statistics: winning chance: {winning_chance:.2f}%, draw percentage: {draw_percentage:.2f}%, safe chance: {safe_chance:.2f}%, bust chance: {dealer_bust_chance:.2f}%")
+                            self.clear_terminal() 
+                            if decision == "Hit":
+                                dealer.deal_cards(dealer.playerID)
+                                self.display_hands() 
+                                time.sleep(1)
+                                dealer_sum = dealer.hand_sum(dealer.playerID)
+                                if self.check_for_bust(dealer_sum):
+                                    break 
+                            else:
+                                self.display_hands()
+                                break      
+                        break
+                
+            self.clear_terminal()
+            self.display_hand(dealer.playerID, dealer.hands[dealer.playerID], True)
+            print("Dealer hand\n")
+            self.display_hand(player.playerID, dealer.hands[player.playerID], True)
+            print("Player hand\n") 
+            player_sum = dealer.hand_sum(player.playerID)
+            dealer_sum = dealer.hand_sum(dealer.playerID)
+            
+            print("_________________________________________")
+            self.rules(player_sum, dealer_sum)
+            print(f"Game winner: {self.winner}")
+            if game.winner == "Dealer":
+                self.dealer_win_count += 1
+            elif game.winner == "Player":
+                self.player_win_count += 1
+            else:
+                self.tie_game_count += 1
+            
+            self.total_game_count += 1
+            game.chip_distribution()
+            
+            print("-----------------------------------------")
+            while True:
+                rematchDecision = input("Do you want to play again?(y/n): ")
+                rematchDecision = rematchDecision.strip().lower()
+                if rematchDecision in ['n', 'no']:
+                    play_game = False
+                    self.clear_terminal()
+                    self.display_statistics() 
+                    break 
+                elif rematchDecision in ['y', 'yes']:
+                    if player.bankroll == 0:
+                        self.clear_terminal()
+                        print("You do not have sufficient fund to play.")
+                        play_game = False 
+                        self.display_statistics()
+                        break
+                    self.clear_terminal() 
+                    break 
+                
+    def display_statistics(self):
+        print("Player Statistics:")
+        print("----------------------") 
+        print(f"|Player win: {self.player_win_count:^5}   |")
+        print(f"|Tie game:   {self.tie_game_count:^5}   |")
+        print(f"|Total game: {self.total_game_count:^5}   |")
+        print(f"|Bankroll:   {player.bankroll:^5}$  |")
+        print(f"|Win rate:   {(self.player_win_count/self.total_game_count)*100:^5.1f}%  |")
+        print("----------------------") 
+            
     def display_hand(self, playerID: int, cards: list, reveal):
         """
         This function takes a list of card dictionaries and prints them formatted as small poker cards, 
@@ -59,7 +198,7 @@ class Game:
         print('   '.join(middle_top))          # Print the middle top part of each card
         print('   '.join(middle_bottom))       # Print the middle bottom part of each card
         print('   '.join([bottom] * len(cards)))  # Print the bottom line for all cards
-
+    
     def rules(self, player_sum: int, dealer_sum: int):
         """
         This function takes the sum of player hand and the dealer hand and determine the winner,
@@ -69,52 +208,69 @@ class Game:
             player_sum (int): The sum value of the player's hand
             dealer_sum (int): The sum value of the dealer's hand
         """
+        
         if player_sum > 21:
-            game.winner = "Dealer"
+            self.winner = "Dealer"
             print("You busted! Dealer win!")
-
         if dealer_sum > 21:
-            game.winner = "Player"
+            self.winner = "Player"
             print("The Dealer has busted. You win!")
-
         if player_sum == 21:
             print("You got 21! Blackjack! So you win!")
             if dealer_sum == 21:
-                game.winner = "Tie" 
+                self.winner = "Tie" 
                 print("The Dealer also got 21. Tough Break.")
             else:
-                game.winner = "Player"
+                self.winner = "Player"
             return
         
         elif dealer_sum == 21:
-            game.winner = "Dealer"
+            self.winner = "Dealer"
             print("The Dealer got 21! Tough Break, you lose!")
             return
         
         if player_sum < 21 and dealer_sum < 21:
             if player_sum > dealer_sum:
-                game.winner = "Player"
+                self.winner = "Player"
                 print("You beat the Dealer! You got lucky punk.")
             elif player_sum == dealer_sum:
-                game.winner = "Tie"
+                self.winner = "Tie"
                 print("It is a push, no one wins!")
             elif player_sum < dealer_sum:
-                game.winner = "Dealer"
+                self.winner = "Dealer"
                 print("Dealer wins! Better luck next time.")
         return
-
+    
+    def chip_distribution(self):
+        if self.winner == "Player":
+            player.bankroll += self.player_bet * 2 
+            print(f"You recieved ${self.player_bet}.")
+        elif self.winner == "Tie":
+            player.bankroll += self.player_bet
+            print("No one wins.") 
+        elif self.winner == "Dealer":
+            print(f"You lost ${self.player_bet}.")
+    
 class Player:
     def __init__(self):
         self.playerID = 1
-        self.currency = 100
+        self.bankroll = 1000
         self.hit_status = True 
         self.stand_status = False 
-
+        
     def player_stand(self):
         """ This function modify player's status when making the decision to stand """
         self.hit_status = False
         self.stand_status = True 
-
+        
+    def place_bet(self, amount: int) -> bool:
+        if self.bankroll >= amount:
+            game.player_bet = amount 
+            self.bankroll -= amount 
+            return True 
+        else:
+            return False 
+        
 class Dealer:
     def __init__(self, num_players):
         self.num_players = num_players
@@ -157,13 +313,10 @@ class Dealer:
         # Evaluate the sum of the player's hand given playerID as identifier
         hand = [card['value'] for card in self.hands[playerID]] # ['9', 'A']
         hand_val = [self.special_values[card] if card in ['A', 'J', 'Q', 'K'] else card for card in hand]  # [9, [1, 11]]
-
         if hand == ['A', 'A']:
             hand_val = 12 
-            return dealer.card_counting((['A', 'A'], 12))
-
+            return self.card_counting((['A', 'A'], 12))
         ace_present = False 
-
         handA = []  
         handA_sum = 0
         handB = None # Second hand if Ace is present
@@ -177,25 +330,20 @@ class Dealer:
         else:
             handA = hand_val
             handA_sum = sum([int(i) for i in handA])
-
         primary_hand = None 
-
         if ace_present:
-            primary_hand = dealer.optimized_ace_hand(playerID, hand, (handA, handB))
+            primary_hand = self.optimized_ace_hand(playerID, (handA, handB))
         else:
             primary_hand = (handA, handA_sum)
         
-        return dealer.card_counting(primary_hand)
+        return self.card_counting(primary_hand)
     
     # Return the optimized ace inclusive hand that allow the requested hand to not bust 
-    def optimized_ace_hand(self, playerID, hand, hands: tuple) -> tuple:
+    def optimized_ace_hand(self, playerID, hands: tuple) -> tuple:
         handA, handB = hands
-
         handA_sum = sum([int(card_val) for card_val in handA]) 
         handB_sum = sum([int(card_val) for card_val in handB])
-
         primary_hand = None
-
         # If either scenario goes bust and alternative is safe -> return the safe hand
         if handA_sum > 21 and handB_sum <= 21:
             primary_hand = (handB, handB_sum)
@@ -208,8 +356,8 @@ class Dealer:
             
         # If both scenarios are bust > 21
         if handA_sum > 21 and handB_sum > 21:
-            return f"Player {playerID} busted with the hand: {hand}"
-
+            game.winner = self.playerID if playerID == player.playerID else player.playerID
+            primary_hand = (handA, handA_sum) if handA_sum <= handB_sum else (handB, handB_sum)
         return primary_hand
     
     # Calculate the chance of the dealer to draw a safe card 
@@ -219,7 +367,6 @@ class Dealer:
         deck = [card['value'] for card in self.deck]
         safe_cards_count = 0 # Cards the dealer can have without getting busted
         bust_cards_count = 0
-
         safe_cards_count += deck.count('A')
         for card_val in range(2, winning_difference+1):
             if card_val == 10:
@@ -232,7 +379,7 @@ class Dealer:
         return (bust_cards_count, hand, val, round((safe_cards_count/len(deck))*100, 2))
     
     def hand_sum(self, playerID):
-        return dealer.hand_evaluation(playerID)[2]
+        return self.hand_evaluation(playerID)[2]
     
     def win_probability(self):
         # Player has taken all the cards and choose to stand
@@ -243,43 +390,35 @@ class Dealer:
         #   -> This chance is equivelent to winning/tie chance 
         # If winning chance is greater than the average/media percentage of the card_val
         # Take another card from the deck
-        player_sum = dealer.hand_evaluation(player.playerID)[2]
-        dealer_bust_cards_count, _, dealer_sum, dealer_safe_card_chance = dealer.hand_evaluation(0)
-
+        player_sum = self.hand_evaluation(player.playerID)[2]
+        dealer_bust_cards_count, _, dealer_sum, dealer_safe_card_chance = self.hand_evaluation(0)
         if player_sum > 21:
             return (100.00, 0.00, 100.00, 0.00)
         
         if dealer_sum > 21:
             return (0.00, 0.00, 0.00, 100.00)
-
         elif dealer_sum <= player_sum:
             deck = [card['value'] for card in self.deck]
             dealer_bust_chance = round((dealer_bust_cards_count/len(deck)) * 100, 2)
             potential_win_card = defaultdict(dict) # Cards the dealer can have without getting busted
-
             player_max_difference = 21 - player_sum 
             dealer_win_hand = [player_sum + difference for difference in range(1, player_max_difference + 1)]
-
             dealer_win_card = [str(diff) for card_val in dealer_win_hand if (diff := card_val - dealer_sum) <= 11]
             # print(f"dealer win hand: {dealer_win_hand}\ndealer win card: {dealer_win_card}")
-
             if '1' in dealer_win_card or '11' in dealer_win_card:
                 potential_win_card['A'] = deck.count('A')
                 try:
                     dealer_win_card.remove('1')
                 except ValueError:
                     dealer_win_card.remove('11')
-
             for card_val in dealer_win_card:
                 if card_val == '10':
                     for card in ['10', 'J', 'Q', 'K']:
                         potential_win_card[card] = deck.count(card)
                 else:
                     potential_win_card[card_val] = deck.count(str(card_val))
-
             winning_possibility = sum([potential_win_card[card_val] for card_val in potential_win_card.keys()])
             draw_level = False 
-
             # Calculate draw possibility -> Dealer must also have a hand with sum of 21
             draw_difference = player_sum - dealer_sum
             draw_difference_count = 0
@@ -290,7 +429,6 @@ class Dealer:
             else:
                 draw_difference_count = deck.count(str(draw_difference))
             draw_percentage = (draw_difference_count/len(deck)) * 100
-
             if winning_possibility == 0:
                 draw_level = True
             
@@ -313,22 +451,32 @@ class Dealer:
         #   -> Dealer's chance of busting
         # Dealer Chance of Winning
         #   -> Dealer drawing a hand with sum greater than player
-        winning_percentage, draw_percentage, safe_percentage, dealer_bust_chance = dealer.win_probability() 
+        winning_percentage, draw_percentage, safe_percentage, dealer_bust_chance = self.win_probability() 
 
-        if winning_percentage == 100:
+        if winning_percentage == 100: # Leave it
             return "Stand"
-        
+
         if winning_percentage > dealer_bust_chance: # More likely to win than bust
             return "Hit"
         
         elif winning_percentage < dealer_bust_chance: # More likely to bust
-            # Check draw possibility
-            if draw_percentage == 100:
-                return "stand"
+            # If draw
+            if draw_percentage == 100: 
+                if safe_percentage >= 66:
+                    return "Hit"
+                else:
+                    return "stand"
+
+            # Next draw is fairly safe
             if safe_percentage > dealer_bust_chance:
                 return "Hit"
-            elif winning_percentage + draw_percentage + safe_percentage > dealer_bust_chance:
+            
+            if winning_percentage >= 30:
                 return "Hit"
+            # Impossible to win, 1/3 chance for safe card
+            if winning_percentage == 0 and safe_percentage >= 33:
+                return "Hit"
+            
             else:
                 return "Stand"
         else: # Equal
@@ -336,65 +484,9 @@ class Dealer:
                 return "Hit"
             else:
                 return "Stand"
-            
-game = Game()
-dealer = Dealer(game.num_players) 
-player = Player()
-onGoingGame = True
-
-dealer.shuffle()
-dealer.draw()
-
-# Display hand
-game.display_hand(dealer.playerID, dealer.hands[dealer.playerID], False)
-print("Dealer hand\n")
-game.display_hand(player.playerID, dealer.hands[player.playerID], True)
-print("Player hand\n") 
-
-player_sum = dealer.hand_sum(player.playerID)
-dealer_sum = dealer.hand_sum(dealer.playerID)
-if dealer_sum == 21:
-    game.winner = "Dealer"
-    game.rules(player_sum, dealer_sum)
-elif player_sum == 21:
-    game.winner = "Player"
-    game.rules(player_sum, dealer_sum)
-if dealer_sum == 21 and dealer_sum == player_sum:
-    game.winner = "Tie"
-    game.rules(player_sum, dealer_sum)
-
-# Game begins
-if game.winner == None:
-    while onGoingGame:
-        userDecision = input("Hit/Stand: ")
-        userDecision = userDecision.strip().lower()
-        if userDecision == 'hit':
-            dealer.deal_cards(player.playerID)
-            winning_chance, draw_percentage, safe_chance, dealer_bust_chance = dealer.win_probability()
-            game.display_hand(player.playerID, dealer.hands[player.playerID], True)
-            print("Player hand\n")
-            print(f"Dealer Statistics: winning chance: {winning_chance:.2f}%, draw percentage: {draw_percentage:.2f}%, safe chance: {safe_chance:.2f}%, bust chance: {dealer_bust_chance:.2f}%")
-        elif userDecision == 'stand':
-            player.player_stand()
-            while True:
-                decision = dealer.decision()
-                print(f"dealer decision (player: stand): {decision}")
-                winning_chance, draw_percentage, safe_chance, dealer_bust_chance = dealer.win_probability()
-                print(f"Dealer Statistics: winning chance: {winning_chance}%, draw percentage: {draw_percentage}%, safe chance: {safe_chance}%, dealer bust chance: {dealer_bust_chance:.2f}%")
-                if decision == "Hit":
-                    dealer.deal_cards(dealer.playerID)
-                    game.display_hand(dealer.playerID, dealer.hands[dealer.playerID], False)
-                    print("Dealer hand\n") 
-                else:
-                    break 
-            player_sum = dealer.hand_sum(player.playerID)
-            dealer_sum = dealer.hand_sum(dealer.playerID)
-            print("______________________________________")
-            game.rules(player_sum, dealer_sum)
-            print(f"Game winner: {game.winner}")
-            break
-
-game.display_hand(dealer.playerID, dealer.hands[dealer.playerID], True)
-print("Dealer hand\n")
-game.display_hand(player.playerID, dealer.hands[player.playerID], True)
-print("Player hand\n")
+                
+if __name__ == "__main__":
+    game = Game()
+    dealer = Dealer(game.num_players) 
+    player = Player()
+    game.main_game()
