@@ -448,10 +448,9 @@ class Dealer:
             else:
                 return "Stand"
             
-game = Game()
-dealer = Dealer(game.num_players) 
-player = Player()
-
 if __name__ == "__main__":
+    game = Game()
+    dealer = Dealer(game.num_players) 
+    player = Player()
     game.main_game()
 
