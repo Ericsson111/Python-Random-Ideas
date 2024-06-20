@@ -26,13 +26,6 @@ def split_by_plus_or_minus(string):
     if len(term) > 0:
         return term 
     return [string]
-    
-def isInteger(string):
-    try:
-        int(string)
-        return True 
-    except ValueError:
-        return False 
 
 def solve_linear_equation(input_expression: str):
     # Add necessary symbols to conduct multiplication and division 
