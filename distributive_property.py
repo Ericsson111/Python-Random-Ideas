@@ -1,9 +1,13 @@
+# Ericsson Cui
+# 2024/06/29 
 
 import os
 
+# Clear Terminal
 def clear():
     os.system("cls || clear")
 
+# Validating the paranthesis of input expression
 def valid_paranthesis(paranthesis: str) -> bool:
     o1 = "" # open brackets
     c1 = "" # close brackets
@@ -19,112 +23,17 @@ def valid_paranthesis(paranthesis: str) -> bool:
     else:
         return ''.join([pair[o] for o in o1]) == c1
 
-def isInteger(string: str) -> bool:
+# Determine if the given string is numeric
+def isNumeric(string: str) -> bool:
     try:
-        int(string) 
+        float(string) 
         return True 
     except ValueError:
-        return False 
+        return False
 
-def combining_expression(unknown: str, enclosed_terms: list) -> str:
-    # Seperate numeric values with algebraic values 
-    unknown_terms = []
-    numeric_terms = [] 
-    for term in enclosed_terms:
-        if unknown not in term:
-            numeric_terms.append(term) 
-        elif unknown in term:
-            # Assign the unknown value with a numeric value (ex: 2)
-            # 4x - 2x = 2x 
-            # 4*2 - 2*2 = 8 - 4 = 4 
-            # x = (4/2) 
-            term = term.replace('x', '2')
-            unknown_terms.append(term) 
-    print(f"enclosed_terms: {enclosed_terms}")
-    print(f"unknown_terms: {unknown_terms}")
-    print(f"numeric_terms: {numeric_terms}")
-    numeric_term = eval(''.join(numeric_terms)) 
-    print(f"numeric_term: {numeric_term}")
-    simplified_term = eval(str(numeric_term) + ''.join(unknown_terms)) / 2 
-    if len(unknown_terms) > 0 or eval(''.join(unknown_terms)) != 0:
-        return str(simplified_term) + "*" + unknown
-    return str(simplified_term)
-
-def updating_expression(coefficient_and_enclosed_expression, update_expression, update_value):
-    for coefficient in coefficient_and_enclosed_expression.keys():
-        new_expression = coefficient_and_enclosed_expression[coefficient].replace(update_expression, str(update_value))
-        coefficient_and_enclosed_expression[coefficient] = new_expression 
-    print(coefficient_and_enclosed_expression)
-    return coefficient_and_enclosed_expression
-
-def collecting_like_terms(unknown: str, coefficient_and_enclosed_expression: dict, coefficients: str) -> dict:
-    # Multiply coefficient with all terms inside the enclosed expression
-    # Begin multiplying from the last item inside the dictionary
-    # Replace it's way back in and then simplify the full equation 
-    # Collect like terms 
-    operations = ['+', '-', '*', '/']
-    known_coefficient = ''
-    known_enclosed_terms = [] 
-    known_enclosed_expression = ''
-    
-    for coefficient_ind in range(len(coefficient_and_enclosed_expression) - 1, -1, -1):
-        coefficient = coefficients[coefficient_ind]
-        enclosed_expression = coefficient_and_enclosed_expression[coefficient]
-        
-        enclosed_terms = [] # term1, term2, term3, ... 
-        previous_operation_ind = 0 
-        
-        print(coefficient, enclosed_expression)
-    
-        if enclosed_expression.count('(') > 1: 
-            # Unknown variable appears
-            # Conduct multiplication 
-            # coefficient: 22, known_enclosed_expression; (18 - x + 2), known_enclosed_terms: ['18', '-x', '+2)']
-            print(f"coefficient: {known_coefficient}, known_enclosed_expression; {known_enclosed_expression}, known_enclosed_terms: {known_enclosed_terms}")
-            
-            # Combining and rewriting terms 
-            combined_expression = combining_expression(unknown, known_enclosed_terms)
-            coefficient_and_enclosed_expression = updating_expression(coefficient_and_enclosed_expression, known_enclosed_expression, combined_expression)
-            del coefficient_and_enclosed_expression[list(coefficient_and_enclosed_expression.keys())[-1]]
-            return coefficient_and_enclosed_expression, known_enclosed_terms 
-
-
-        for char_ind in range(len(enclosed_expression)):
-            char = enclosed_expression[char_ind] 
-
-            if char in operations: 
-                term = enclosed_expression[previous_operation_ind:char_ind]
-                if previous_operation_ind == 0 and enclosed_expression[previous_operation_ind] not in operations:
-                    term = enclosed_expression[previous_operation_ind + 1:char_ind]
-                if term != '':
-                    previous_operation_ind = char_ind
-                    enclosed_terms.append(term) 
-        enclosed_terms.append(enclosed_expression[previous_operation_ind:-1])
-
-        known_coefficient = coefficient
-        known_enclosed_expression = enclosed_expression
-        known_enclosed_terms = enclosed_terms
-        
-    combined_expression = combining_expression(unknown, known_enclosed_terms)
-    coefficient_and_enclosed_expression = updating_expression(coefficient_and_enclosed_expression, known_enclosed_expression, combined_expression)
-    del coefficient_and_enclosed_expression[list(coefficient_and_enclosed_expression.keys())[-1]]
-    return coefficient_and_enclosed_expression, known_enclosed_terms
-
-
-def distributive_property(expression: str) -> str:
-    # Given an expression with parenthesis and a coefficient "n" in front 
-    # Multiply the individual term within the parenthesis with n 
-
-    # Validating the paranthesis in given expression 
-    if not valid_paranthesis(expression):
-        raise Exception("Paranthesis are invalid.") 
-    
-    clear()
-
-    # Unknown variable: x, y, ...
-    unknown = ''
-    
-    # ------------------------------- Modifying Input Expression -------------------------------
+# Modifying the given expression to satisfy future process
+def modifying_expression(expression: str) -> set:
+    unknown = None  # Unknown variable: x, y, ...
     char_ind = 0 
     expression_list = list(expression)
     
@@ -137,8 +46,9 @@ def distributive_property(expression: str) -> str:
         # Modify the expression with parentheses
         if char in ('[', '('):
             if char_ind > 0 and expression_list[char_ind - 1].isdigit():
+                # Add "*" for eval() of expression
                 expression_list.insert(char_ind, '*')
-                char_ind += 1  # Increment to skip the inserted '*'
+                char_ind += 1  
             expression_list[char_ind] = '('
         
         char_ind += 1  
@@ -146,16 +56,23 @@ def distributive_property(expression: str) -> str:
     expression = ''.join(expression_list).replace(' ', '')
     print(f"Modified expression: {expression}")
     print(f"unknown: {unknown}")
-    
+    if unknown == None:
+        print(f"{expression} = {eval(expression)}")
+        quit()
+    return unknown, expression
+
+def identify_coefficient_and_enclosed_expression(expression: str) -> set:
     # Storage
     coefficient_and_enclosed_expression = {} # coefficient: enclosed_term 
     coefficients = [] # Stores all the coefficients
     coefficient_ind = [] # Stores the index position of coefficients
     
-    # ------------------------------- Identify Coefficient and Enclosed Expression -------------------------------
+    # Initialize left&right pointer
     left_pointer = 0 
     right_pointer = len(expression) - 1 
-    print(f"expression: {expression}")
+
+    print('-'*30)
+
     while left_pointer < len(expression):
 
         if expression[left_pointer] == '(':
@@ -184,52 +101,220 @@ def distributive_property(expression: str) -> str:
                     right_pointer -= 1 
                     break 
                 right_pointer -= 1 
+            print("-"*30)
                 
         left_pointer += 1 
+    print(f"coefficient_and_enclosed_expression: {coefficient_and_enclosed_expression}")
     print(f"coefficients: {coefficients}")
+    print(f"coefficient_ind: {coefficient_ind}") 
+    return coefficient_and_enclosed_expression, coefficients
 
-    # ------------------------------- Simplifying Enclosed Expression -------------------------------
-    # Now given the processed expression we can begin to multiply from inside and work our way out 
-    # Simplify the numerical terms and leaving the unknown
-    coefficient_ind = -1
-    update_enclosed_expression = ''
-    update_value = ''
-    while abs(coefficient_ind) < len(coefficients) + 1:
-        coefficient = coefficients[coefficient_ind]
-        enclosed_expression = coefficient_and_enclosed_expression[coefficient] 
-        print(f"coefficient: {coefficient}, enclosed_expression: {enclosed_expression}")
-        if unknown not in enclosed_expression and unknown not in coefficient:
-            if coefficient[0] not in ('*', '/'):
-                print("Point A triggered")
-                update_enclosed_expression = coefficient + "*" + enclosed_expression
-                print(f"update_enclosed_expression: {update_enclosed_expression}")
-                update_value = eval(update_enclosed_expression)
-                print(update_enclosed_expression, update_value)
-                coefficient_ind -= 1 
-                del coefficient_and_enclosed_expression[coefficient]
+def identify_enclosed_terms(enclosed_expression: str) -> list:
+    # Collect all individual terms inside the enclosed expression
+    # Handle operators and parentheses correctly, ensuring that '*' and '/' are stored by themselves,
+    # while '+' and '-' are inclusive with the terms that follow them.
+    operations = set('+-*')
+    enclosed_terms = []
+    operators = [] 
+    term_start = 0
+    print(f"enclosed_expression: {enclosed_expression}")
+    if enclosed_expression[0] == '(' and enclosed_expression[-1] == ')':
+        enclosed_expression = enclosed_expression[1:-1]
+    
+    if enclosed_expression[0] == '*' or enclosed_expression[-1] in '+-':
+        raise Exception("Operators placed in incorrect position.")
+
+    for char_ind, char in enumerate(enclosed_expression):
+        if char in operations:
+            if char_ind > 0 and enclosed_expression[char_ind-1] not in operations:
+                # Cases where the operation should be included in the next term
+                # Previous char is not an operation 
+                if char in '+-':
+                    enclosed_terms.append(enclosed_expression[term_start:char_ind].strip())
+                    term_start = char_ind  # Start the new term from the operator
+                elif char in '*':
+                    enclosed_terms.append(enclosed_expression[term_start:char_ind].strip())
+                    enclosed_terms.append(char) # Add the operator itself as a seperate term 
+                    term_start = char_ind + 1  # Start new term after the operator
+                operators.append(char)
+            elif char_ind == 0 or enclosed_expression[char_ind-1] in operations:
+                # Possibly a division/multiplication of a negative term 
+                if char in '*':
+                    enclosed_terms.append(char)
+                    operators.append(char)
+                    term_start = char_ind + 1
+
+        elif char_ind == len(enclosed_expression) - 1: 
+            # Add the last term 
+            enclosed_terms.append(enclosed_expression[term_start:].strip())
+    print(f"operators: {operators}")
+    return enclosed_terms, operators
+    
+def finding_coefficients(unknown: str, terms: list, multiplication: bool) -> bool:
+    coefficients = [] 
+    unknown_found = False
+    print(f"given terms: {terms}") 
+    for term in terms:
+        if unknown not in term:
+            coefficients.append(term)
+        else:
+            coefficient = term[:term.index(unknown)] 
+            if not isNumeric(coefficient):
+                coefficient = coefficient + '1'
+            coefficients.append(coefficient)
+            unknown_found = True 
+    
+    if multiplication:
+        coefficients.insert(1, '*') 
+        print(f"coefficients: {coefficients}")
+        coefficient = str(eval(''.join(coefficients)))
+        if unknown_found:
+            return coefficient + 'x'
+        return coefficient
+    else:
+        return coefficients 
+                    
+def simplify_enclosed_expression(unknown: str, enclosed_expression: str, enclosed_terms: str) -> str:
+    print(f"enclosed_expression: {enclosed_expression}")
+    if unknown not in enclosed_expression:
+        simplified_expression = eval(enclosed_expression)
+        print(f"simplified_expression: {simplified_expression}")
+        return str(simplified_expression)
+    else:
+        # Unknown values in enclosed expression
+        print(f"Unknown values...\nexpression 14: {enclosed_expression}")
+        multiplied_terms = [term_ind for term_ind in range(len(enclosed_terms)) if enclosed_terms[term_ind] == '*']
+        print(f"multiplied_terms: {multiplied_terms}")
+        
+        if len(multiplied_terms) == 0:
+            terms_with_unknown = [] 
+            terms_with_numeric = [] 
+            for term_ind, term in enumerate(enclosed_terms):
+                if unknown in term:
+                    terms_with_unknown.append(term)
+                else:
+                    terms_with_numeric.append(term) 
+
+            coefficients_of_numeric = eval(''.join(terms_with_numeric))
+            print(f"coefficients_of_numeric: {coefficients_of_numeric}")
+
+            coefficients_of_unknown = finding_coefficients(unknown, terms_with_unknown, False)
+            print(f"coefficients_of_unknown: {coefficients_of_unknown}")
+
+            new_coefficients_of_unknown = eval(''.join(coefficients_of_unknown))
+            print(f"new_coefficients_of_unknown: {new_coefficients_of_unknown}") 
+
+            if coefficients_of_numeric < 0:
+                enclosed_expression = str(new_coefficients_of_unknown) + unknown + str(coefficients_of_numeric)
+            elif coefficients_of_numeric > 0:
+                enclosed_expression = str(new_coefficients_of_unknown) + unknown + '+' + str(coefficients_of_numeric)
             else:
-                raise Exception("Invalid operation symbol placement.")
+                enclosed_expression = str(new_coefficients_of_unknown) + unknown
+            print(f"new enclosed_expression: {enclosed_expression}")
+            return enclosed_expression
+                
+        
+        # Combining coefficients for multiplication
+        for term_ind, term in enumerate(enclosed_terms):
+            if term == '*':
+                prev_term, next_term = enclosed_terms[term_ind - 1], enclosed_terms[term_ind + 1] 
+                combined_term = finding_coefficients(unknown, [prev_term, next_term], True)
+                enclosed_terms = [combined_term] + enclosed_terms[term_ind+2:] 
+                print(f"updated enclosed_terms: {enclosed_terms}")
+                print("-"*40)
+                return simplify_enclosed_expression(unknown, enclosed_expression, enclosed_terms)
+
+    print("-"*40)      
+
+def multiply_inside_out(unknown: str, coefficient: str, enclosed_terms: list, operators: list) -> str: 
+    print(f" --- multiply_inside_out:\ncoefficient: {coefficient}\nenclosed_terms: {enclosed_terms} ")
+    new_term = ''
+    for term_ind, term in enumerate(enclosed_terms):
+        if unknown in coefficient and unknown in term:
+            raise Exception("Only linear relations are accepted.")
+        if unknown in coefficient:
+            term_coefficient = coefficient[:coefficient.index(unknown)] 
+            new_coefficient = float(term_coefficient) * float(term)
+            new_term += str(new_coefficient) + unknown 
+        elif unknown in term:
+            term_coefficient = term[:term.index(unknown)] 
+            new_coefficient = float(coefficient) * float(term_coefficient)
+            new_term += str(new_coefficient) + unknown 
+        
+        if term_ind <= len(operators) - 1:
+            if enclosed_terms[term_ind + 1][0] != '-':
+                new_term += operators[term_ind] 
             
         else:
-            print("Point B triggered")
-            for coefficient_ind in range(len(coefficient_and_enclosed_expression) - 1, -1, -1):
-                coefficient = coefficients[coefficient_ind]
-                new_enclosed_expression = coefficient_and_enclosed_expression[coefficient].replace(update_enclosed_expression, str(update_value))
-                coefficient_and_enclosed_expression[coefficient] = new_enclosed_expression
-            break 
+            new_term += str(float(coefficient) * float(term))
+    print(f"new_term: {new_term}")
+    return new_term
 
-    print("Run Result:\n")
+def updating_expression(coefficient_and_enclosed_expression, update_expression, update_value):
+    coefficients = list(coefficient_and_enclosed_expression.keys())
+    coefficient_index = len(coefficient_and_enclosed_expression) - 1 
+
+    while coefficient_index >= 0:
+        coefficient = coefficients[coefficient_index - 1]
+        print(f"---------- Replacing {update_expression} with {'(' + str(update_value) + ')'} ----------")
+        new_expression = coefficient_and_enclosed_expression[coefficient].replace(update_expression, str(update_value))
+        coefficient_and_enclosed_expression[coefficient] = new_expression
+        coefficient_index -= 1
+ 
     print(coefficient_and_enclosed_expression)
+    return coefficient_and_enclosed_expression
 
-    # ------------------------------- Multiplying Coefficient with Enclosed Terms -------------------------------
-    coefficient_and_enclosed_expression, enclosed_terms = collecting_like_terms(unknown, coefficient_and_enclosed_expression, coefficients)
-    coefficient_and_enclosed_expression, enclosed_terms = collecting_like_terms(unknown, coefficient_and_enclosed_expression, coefficients)
-    coefficient_and_enclosed_expression, enclosed_terms = collecting_like_terms(unknown, coefficient_and_enclosed_expression, coefficients)
-    print(f"-------- {enclosed_terms} --------")
-    a = combining_expression(unknown, enclosed_terms)
-    print(a)
+def distributive_property(input_expression: str) -> str:
+    # Validating the paranthesis in given expression 
+    if not valid_paranthesis(input_expression):
+        raise Exception("Paranthesis are invalid.") 
+    
+    # Reject rational expressions
+    if '/' in input_expression:
+        raise Exception("Rational expression will not be accepted.")
+    
+    # Initialize base conditions
+    # Determining the unknown variable and break down brackets
+    unknown_var, expression = modifying_expression(input_expression)  
+    coefficient_and_enclosed_expression, coefficients = identify_coefficient_and_enclosed_expression(expression)
+    print(f"unknown_var: {unknown_var}\nexpressio 12: {expression}")
+    print(f"coefficient_and_enclosed_expression: {coefficient_and_enclosed_expression}\ncoefficients: {coefficients}")
 
-clear() # Clear Terminal
-distributive_property("13(22(3(-2*3 / x / 2)) + x + 2)")
+    coefficient_index = len(coefficient_and_enclosed_expression) - 1 
+    while coefficient_index >= 0: 
 
+        coefficient = coefficients[coefficient_index] # Enclosed expression coefficient
+        enclosed_expression = coefficient_and_enclosed_expression[coefficient] # Enclosed expression
 
+        print(f"coefficient: {coefficient} ------------- enclosed_expression: {enclosed_expression}")
+
+        enclosed_terms, operators = identify_enclosed_terms(enclosed_expression)
+        new_expression = simplify_enclosed_expression(unknown_var, enclosed_expression, enclosed_terms)
+        terms, operators = identify_enclosed_terms(new_expression)
+
+        updated_expression = multiply_inside_out(unknown_var, coefficient, terms, operators)
+        updating_expression(coefficient_and_enclosed_expression, coefficient + "*" + enclosed_expression, updated_expression)
+
+        print(coefficient_and_enclosed_expression)
+        del coefficient_and_enclosed_expression[coefficient]
+
+        coefficient_index -= 1 
+        print("-"*100)
+    final_expression = multiply_inside_out(unknown_var, coefficient, terms, operators)
+    print("-"*100)
+    print("Simplified Solution:")
+    print(f"{input_expression} = {final_expression}")
+    print("-"*100)
+    return final_expression
+
+clear()
+input_expression = "13(22(3(-2*3) * x - 2) + x)"
+
+distributive_property_questions = ['2(4 + 9w)', '10(12 - x)', '5(2 + 9x)', '25(4 - x)', '10(2(x+1))']
+answers = []
+for question in distributive_property_questions:
+    answers.append(distributive_property(question))
+
+print("\n\n--------- Testing ---------")
+for question_id in range(len(distributive_property_questions)):
+    print(f"{distributive_property_questions[question_id]} => {answers[question_id]}")
