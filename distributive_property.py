@@ -7,21 +7,17 @@ import os
 def clear():
     os.system("cls || clear")
 
-# Validating the paranthesis of input expression
-def valid_paranthesis(paranthesis: str) -> bool:
-    o1 = "" # open brackets
-    c1 = "" # close brackets
-    for bracketID in range(len(paranthesis)):
-        if paranthesis[bracketID] in ['(', '[', '{']: # If bracket is open 
-            o1 += paranthesis[bracketID] 
-        elif paranthesis[bracketID] in [')', ']', '}']: # bracket is close 
-            c1 += paranthesis[bracketID]
-    
+# Validating the parenthesis of input expression
+def valid_parenthesis(expression: str) -> bool:
+    stack = []
     pair = {'(': ')', '[': ']', '{': '}'}
-    if paranthesis[:2] not in ['{}', '[]', '()']:
-        return ''.join([pair[o] for o in o1])[::-1] == c1
-    else:
-        return ''.join([pair[o] for o in o1]) == c1
+    for char in expression:
+        if char in pair:
+            stack.append(char)
+        elif char in pair.values():
+            if not stack or pair[stack.pop()] != char:
+                return False
+    return not stack
 
 # Determine if the given string is numeric
 def isNumeric(string: str) -> bool:
@@ -32,34 +28,28 @@ def isNumeric(string: str) -> bool:
         return False
 
 # Modifying the given expression to satisfy future process
-def modifying_expression(expression: str) -> set:
-    unknown = None  # Unknown variable: x, y, ...
-    char_ind = 0 
-    expression_list = list(expression)
-    
-    while char_ind < len(expression_list):
-        char = expression_list[char_ind]
-        
-        if char.lower() in 'qwertyuiopasdfghjklzxcvbnm':
+def modify_expression(expression: str) -> tuple:
+    unknown = None
+    modified_expression = []
+
+    for char in expression:
+        if char.lower() in 'abcdefghijklmnopqrstuvwxyz':
             unknown = char
-        
-        # Modify the expression with parentheses
-        if char in ('[', '('):
-            if char_ind > 0 and expression_list[char_ind - 1].isdigit():
-                # Add "*" for eval() of expression
-                expression_list.insert(char_ind, '*')
-                char_ind += 1  
-            expression_list[char_ind] = '('
-        
-        char_ind += 1  
-        
-    expression = ''.join(expression_list).replace(' ', '')
-    print(f"Modified expression: {expression}")
-    print(f"unknown: {unknown}")
-    if unknown == None:
-        print(f"{expression} = {eval(expression)}")
+        if char in ['[', '(']:
+            if modified_expression and modified_expression[-1].isdigit():
+                modified_expression.append('*')
+            modified_expression.append('(')
+        else:
+            modified_expression.append(char)
+
+    modified_expression = ''.join(modified_expression).replace(' ', '')
+    print(f"Modified expression: {modified_expression}")
+    print(f"Unknown variable: {unknown}")
+
+    if unknown is None:
+        print(f"{modified_expression} = {eval(modified_expression)}")
         quit()
-    return unknown, expression
+    return unknown, modified_expression
 
 def identify_coefficient_and_enclosed_expression(expression: str) -> set:
     # Storage
@@ -76,10 +66,10 @@ def identify_coefficient_and_enclosed_expression(expression: str) -> set:
     while left_pointer < len(expression):
 
         if expression[left_pointer] == '(':
-            # paranthesis is found 
+            # parenthesis is found 
             coefficient = 1 # Default coefficient
             
-            # Find the coefficient of the paranthesis 
+            # Find the coefficient of the parenthesis 
             if len(coefficient_ind) == 0:
                 # Use everything to the left if no previous coefficient given 
                 coefficient = expression[:left_pointer - 1]
@@ -91,10 +81,10 @@ def identify_coefficient_and_enclosed_expression(expression: str) -> set:
                 coefficient_ind.append(left_pointer) 
                 print(f"coefficient1: {expression[previous_open_bracket - 1:left_pointer - 1]}")
             coefficients.append(coefficient)
-            # Find the index of closing paranthesis to determine the enclosed expression 
+            # Find the index of closing parenthesis to determine the enclosed expression 
             while right_pointer > left_pointer:
                 if expression[right_pointer] == ')':
-                    # The index position is found for close paranthesis 
+                    # The index position is found for close parenthesis 
                     enclosed_expression = expression[left_pointer:right_pointer + 1]
                     print(f"enclosed_expression: {enclosed_expression}")
                     coefficient_and_enclosed_expression[coefficient] = enclosed_expression
@@ -265,9 +255,9 @@ def updating_expression(coefficient_and_enclosed_expression, update_expression, 
     return coefficient_and_enclosed_expression
 
 def distributive_property(input_expression: str) -> str:
-    # Validating the paranthesis in given expression 
-    if not valid_paranthesis(input_expression):
-        raise Exception("Paranthesis are invalid.") 
+    # Validating the parenthesis in given expression 
+    if not valid_parenthesis(input_expression):
+        raise Exception("parenthesis are invalid.") 
     
     # Reject rational expressions
     if '/' in input_expression:
@@ -275,7 +265,7 @@ def distributive_property(input_expression: str) -> str:
     
     # Initialize base conditions
     # Determining the unknown variable and break down brackets
-    unknown_var, expression = modifying_expression(input_expression)  
+    unknown_var, expression = modify_expression(input_expression)  
     coefficient_and_enclosed_expression, coefficients = identify_coefficient_and_enclosed_expression(expression)
     print(f"unknown_var: {unknown_var}\nexpressio 12: {expression}")
     print(f"coefficient_and_enclosed_expression: {coefficient_and_enclosed_expression}\ncoefficients: {coefficients}")
@@ -314,6 +304,8 @@ distributive_property_questions = ['2(4 + 9w)', '10(12 - x)', '5(2 + 9x)', '25(4
 answers = []
 for question in distributive_property_questions:
     answers.append(distributive_property(question))
+
+distributive_property(input_expression)
 
 print("\n\n--------- Testing ---------")
 for question_id in range(len(distributive_property_questions)):
