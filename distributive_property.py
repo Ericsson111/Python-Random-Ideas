@@ -58,8 +58,6 @@ def identify_coefficient_and_enclosed_expression(expression: str) -> set:
     left_pointer = 0 
     right_pointer = len(expression) - 1 
 
-    print('-'*30)
-
     while left_pointer < len(expression):
 
         if expression[left_pointer] == '(':
@@ -81,7 +79,6 @@ def identify_coefficient_and_enclosed_expression(expression: str) -> set:
                 if expression[right_pointer] == ')':
                     # The index position is found for close parenthesis 
                     enclosed_expression = expression[left_pointer:right_pointer + 1]
-                    print(f"enclosed_expression: {enclosed_expression}")
                     coefficient_and_enclosed_expression[coefficient] = enclosed_expression
                     right_pointer -= 1 
                     break 
