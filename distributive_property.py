@@ -1,5 +1,6 @@
 # Ericsson Cui
 # 2024/06/29 
+# Python 3.7.4
 
 import os
 
@@ -246,7 +247,6 @@ def distributive_property(input_expression: str) -> str:
         updated_expression = multiply_inside_out(unknown_var, coefficient, terms, operators)
         updating_expression(coefficient_and_enclosed_expression, coefficient + "*" + enclosed_expression, updated_expression)
 
-        print(coefficient_and_enclosed_expression)
         del coefficient_and_enclosed_expression[coefficient]
 
         coefficient_index -= 1 
@@ -255,7 +255,6 @@ def distributive_property(input_expression: str) -> str:
     print("-"*100)
     print("Simplified Solution:")
     print(f"{input_expression} = {final_expression}")
-    print("-"*100)
     return final_expression
 
 clear()
